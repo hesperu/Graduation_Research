@@ -1,5 +1,1 @@
-./dataset/*.lbl
-./dataset/*.img
-./dataset/*.IMG
-./dataset/*.tif
-./dataset/*.png
+./dataset/*
