@@ -11,3 +11,12 @@ macでのインストール、使い方はalpsにまとめられてる。
 ### QGIS
 GDALで作ったgeotiffを解析するのに使いそう。  
 <https://qgis.org/ja/site/about/index.html>  
+
+### tifffile
+pythonのモジュールの一つ。  
+tiff画像の保存等に便利。  
+とにかく早い。最初使ったときはびっくりした。  
+インストール
+```sh
+poetry add tifffile
+```
