@@ -8,6 +8,7 @@ import numpy as np
 import re
 import tifffile
 import matplotlib.pyplot as plt
+import sys
 
 # lblファイルを読み込んで,メタデータを抽出する
 def extract_lbl_file(data_path):
@@ -80,6 +81,11 @@ def img2tiffpng(lbl_list,data_path):
 if __name__ == '__main__':
     # データは研究室のPCにおいてあるやつを使う
     # 家で使いたいなら外付けのssdに入れといて
-    data_path = pathlib.Path('/','mnt','ssd4T','ibuka_dataset','origin','sldem')
+    # パスを指定しない場合は、研究室のPCを使うことを想定
+    if len(sys.argv == 1):
+        data_path = pathlib.Path('/','mnt','ssd4T','ibuka_dataset','origin','sldem')
+    else:
+        data_path = pathlib.Path(sys.argv[1])
+        
     lbl_list = convert_metadata(extract_lbl_file(data_path))
     img2tiffpng(lbl_list,data_path)
