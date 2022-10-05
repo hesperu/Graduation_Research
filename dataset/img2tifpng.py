@@ -82,7 +82,7 @@ if __name__ == '__main__':
     # データは研究室のPCにおいてあるやつを使う
     # 家で使いたいなら外付けのssdに入れといて
     # パスを指定しない場合は、研究室のPCを使うことを想定
-    if len(sys.argv == 1):
+    if len(sys.argv) == 1:
         data_path = pathlib.Path('/','mnt','ssd4T','ibuka_dataset','origin','sldem')
     else:
         data_path = pathlib.Path(sys.argv[1])
