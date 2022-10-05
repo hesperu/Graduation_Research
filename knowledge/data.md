@@ -32,7 +32,13 @@ Planetary Data System 公式ドキュメント
         - でもこれはオルソ画像の検証
 
 - 64800個のデータ [1] Onodera+(2018)
-- 
+
+### カラーマッピング color mapping
+画像の色の概念
+SLDEMはviridisカラーマップがデフォ
+可視画像とのペアをとる場合、greyにしないといけない
+matlatb.pyplot のimsaveだとこれを引数で指定できる
+
 
 ## 参考文献
 [1] Onodera+(2020) “Resolution enhancement of DEM of the lunar surface using machine learning”.
