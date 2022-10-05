@@ -75,7 +75,7 @@ def img2tiffpng(lbl_list,data_path):
         tifffile.imwrite(tiff_path,img)
 
         png_path = file_path.with_suffix('.png')
-        plt.imsave(png_path,img)
+        plt.imsave(png_path,img,cmap='gray')
 
 if __name__ == '__main__':
     # データは研究室のPCにおいてあるやつを使う
