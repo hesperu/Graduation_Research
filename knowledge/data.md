@@ -41,6 +41,11 @@ matlatb.pyplot のimsaveだとこれを引数で指定できる
 
 ### 太陽高度
 - 英語ではsolar zenith angleという。
+    - incident angleの方がヒットした。
+    - NACの太陽高度の情報はPDSのデータリポジトリにあるのではなくLROCの画像検索サイトで見れるっぽい
+        - NACのtifを見るところで、詳細が表示される
+        - https://wms.lroc.asu.edu/lroc/view_lroc/
+
 - LRO NACのデータに記載されているか？
 
 ## 参考文献
