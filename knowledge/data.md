@@ -43,8 +43,14 @@ matlatb.pyplot のimsaveだとこれを引数で指定できる
 - 英語ではsolar zenith angleという。
     - incident angleの方がヒットした。
     - NACの太陽高度の情報はPDSのデータリポジトリにあるのではなくLROCの画像検索サイトで見れるっぽい
-        - NACのtifを見るところで、詳細が表示される
+        - NACのtifを見るところで、詳細が表示されるが、詳細が表示されないものもある...
         - https://wms.lroc.asu.edu/lroc/view_lroc/
+- 結論
+    - オルソ画像のディレクトリに書いてあるNACの製品IDを　見て、そのIDを元にデータ検索サイトに入れると太陽高度の情報が出てきまーす！
+    1. まずhttps://wms.lroc.asu.edu/lroc/rdr_product_select　でNAC DTMを調べると、その場所のいオルソ画像も一緒に出てくる
+    2. 調べて出てきたDTMのページからPDSのページに飛ぶ。するとIMG形式でDTMに関連したデータshaded reliefとかオルソ画像とかが入っているディレクトリへといける
+    3. オルソ画像はNACのID(Mで始まる数字の文字列）が入っている。それをhttps://ode.rsl.wustl.edu/moon/ 入力して元データを見つけてくる。
+    4. 元データのメタデータにincident angleが記載されている。
 
 - LRO NACのデータに記載されているか？
 
