@@ -39,6 +39,9 @@ SLDEMはviridisカラーマップがデフォ
 可視画像とのペアをとる場合、greyにしないといけない
 matlatb.pyplot のimsaveだとこれを引数で指定できる
 
+### 太陽高度
+- 英語ではsolar zenith angleという。
+- LRO NACのデータに記載されているか？
 
 ## 参考文献
 [1] Onodera+(2020) “Resolution enhancement of DEM of the lunar surface using machine learning”.
