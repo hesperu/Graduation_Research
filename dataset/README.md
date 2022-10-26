@@ -24,3 +24,13 @@ gdal_translate -of PNG -ot Byte -scale in_tiff.tif out_png_scaled.png
 - gdal_translate だけでは数値型を上手く扱えないから
 - gdal_translateの-otでバンドの画像の数値型を指定してあげないといけない。
  - gdalinfoで得られるBandの所に書いてある型を指定する
+
+## gdalで分解能を落とす
+gdalwarpを使う  
+https://gdal.org/programs/gdalwarp.html#cmdoption-gdalwarp-r
+```sh
+gdalwarp -tr 100 100  -r high.tiff low.tiff
+```
+これは分解能を100に落としている例
+ちなみに画像が大きすぎると無限時間かかるのでやめといた方が良い。  
+LRO NAC の元画像だとすぐにできるけど。
