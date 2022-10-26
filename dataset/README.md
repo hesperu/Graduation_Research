@@ -14,3 +14,13 @@ wget --continue -r -l 1 -A IMG,LBL -w 5 -nd http://imbrium.mit.edu/DATA/SLDEM201
 なんか普通の画像ビューアーで見れないならできない気もするけど、やってるっぽい記事がある
 
 ## GdalでGeotiff→pngだとうまくいかない
+解決。
+'''sh
+gdal_translate -of PNG -ot Byte -scale in_tiff.tif out_png_scaled.png
+'''
+-ot をUInt,IntではなくByteにしないと真っ黒の画像が生成されてしまう。 
+
+### なんで？
+- gdal_translate だけでは数値型を上手く扱えないから
+- gdal_translateの-otでバンドの画像の数値型を指定してあげないといけない。
+ - gdalinfoで得られるBandの所に書いてある型を指定する
