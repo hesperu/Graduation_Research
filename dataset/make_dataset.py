@@ -13,8 +13,10 @@ class DatasetProcess:
         self.result_sldem_path = self.processed_path.joinpath("sldem")
         self.result_lro_nac_path = self.processed_path.joinpath("lro_nac")
         self.result_lro_nac_png_path = self.result_lro_nac_path.joinpath("png")
-        self.result_cut_lro_nac_path = self.result_lro_nac_path.joinpath("cut")
         self.result_lro_nac_tiff_path = self.result_lro_nac_path.joinpath("tiff")
+        self.result_cut_lro_nac_path = self.result_lro_nac_path.joinpath("cut")
+        self.result_cut_lro_nac_tiff_path = self.result_cut_lro_nac_tiff_path.joinpath("tiff")
+        self.result_cut_lro_nac_png_path = self.result_cut_lro_nac_tiff_path.joinpath("png")
         self.sldem_list =list(self.origin_data_path.joinpath("sldem").glob("**/*.LBL"))
         self.nac_list = list(self.origin_data_path.joinpath("lro_nac").glob("**/*.tiff"))
         # 加工したデータセットのディレクトリが存在しないなら作る
@@ -64,14 +66,14 @@ class DatasetProcess:
                 subprocess.call(cmd)
     
     def nac2png(self):
-        if self.result_lro_nac_png_path.exists():
+        if self.result_cut_lro_nac_png_path.exists():
             pass
         else:
-            self.result_lro_nac_png_path.mkdir()
+            self.result_cut_lro_nac_png_path.mkdir()
 
-        for nac in list(self.result_lro_nac_path.glob(("**/*.tiff"))):
+        for nac in list(self.result_cut_lro_nac_tiff_path.glob(("**/*.tiff"))):
             file_name = pathlib.Path(nac).with_suffix(".png").name
-            result_file_path = self.result_lro_nac_png_path.joinpath(str(file_name))
+            result_file_path = self.result_cut_lro_nac_png_path.joinpath(str(file_name))
             
             if result_file_path.exists():
                 pass
@@ -85,6 +87,11 @@ class DatasetProcess:
             pass
         else:
             self.result_cut_lro_nac_path.mkdir()
+        
+        if self.result_cut_lro_nac_tiff_path.exists():
+            pass
+        else:
+            self.result_cut_lro_nac_tiff_path.mkdir()
 
         for nac in list(self.result_lro_nac_tiff_path.glob("**/*.tiff")):
             origin_data = gdal.Open(str(nac))
@@ -115,7 +122,7 @@ class DatasetProcess:
             
             for i in range(0,height,cut_height):
                 for j in  range(0,width,cut_width):
-                    result_file_path = self.result_cut_lro_nac_path.joinpath(str(cnt)+str(nac.name))
+                    result_file_path = self.result_cut_lro_nac_tiff_path.joinpath(str(cnt)+str(nac.name))
                     left_x = str(data_info[0] + j*data_info[1] + height * data_info[2])
                     bottom_y = str(data_info[3] + (j+cut_width)*data_info[4] + (i+cut_height) * data_info[5])
                     right_x = str(data_info[0] + (j+cut_width) * data_info[1] + (i+cut_height)*data_info[2])
