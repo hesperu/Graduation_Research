@@ -4,6 +4,10 @@
 ```sh
 wget --continue -r -l 1 -A IMG,LBL -w 5 -nd http://imbrium.mit.edu/DATA/SLDEM2015/TILES/FLOAT_IMG/
 ```
+## SLDEM
+```sh
+wget --continue -r -l 1 -A img,lbl -w 5 -nd https://data.darts.isas.jaxa.jp/pub/pds3/sln-l-tc-5-sldem2013-v1.0/lon***/data/
+```
 
 # データセットの作り方
 1. LRO NAC Orthoのincident angleを確認して条件を満たすようなデータを取ってくる。(スクレイピング？）
