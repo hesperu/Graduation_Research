@@ -19,9 +19,9 @@ wget --continue -r -l 1 -A img,lbl -w 5 -nd https://data.darts.isas.jaxa.jp/pub/
 
 ## GdalでGeotiff→pngだとうまくいかない
 解決。
-'''sh
+```sh
 gdal_translate -of PNG -ot Byte -scale in_tiff.tif out_png_scaled.png
-'''
+```
 -ot をUInt,IntではなくByteにしないと真っ黒の画像が生成されてしまう。 
 
 ### なんで？
