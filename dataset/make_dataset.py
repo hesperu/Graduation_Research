@@ -22,7 +22,7 @@ class DatasetProcess:
         self.result_cut_lro_nac_tiff_path = self.result_cut_lro_nac_path.joinpath("tiff")
         self.result_cut_lro_nac_png_path = self.result_cut_lro_nac_path.joinpath("png")
         self.sldem_list =list(self.origin_data_path.joinpath("sldem2015").glob("**/*.LBL"))
-        self.nac_list = list(self.origin_data_path.joinpath("lro_nac").glob("**/*.tiff"))
+        self.nac_list = list(self.origin_data_path.joinpath("lro_nac").glob("**/*"))
         # 加工したデータセットのディレクトリが存在しないなら作る
         if self.processed_path.exists():
             pass
@@ -68,15 +68,22 @@ class DatasetProcess:
             print("not supported sldem")
             return
 
-        for nac in self.nac_list:
+        for nac_dir in self.nac_list:
             # 画像の解像度が得られる
-            result_file_path = self.result_lro_nac_tiff_path.joinpath(str(nac.name))
-            # 加工後の画像がないならdownsampling
-            if result_file_path.exists():
+            result_dir_path = self.result_lro_nac_path.joinpath(nac_dir.name)
+            if result_dir_path.exists():
                 pass
             else:
-                cmd = ["gdalwarp","-tr",str(x_resolution),str(y_resolution), "-r","near",str(nac), str(result_file_path)]
-                subprocess.call(cmd)
+                result_dir_path.mkdir()
+
+            for nac in list(nac_dir.glob("**/*.TIF")):
+                result_file_path = self.result_lro_nac_path.joinpath(str(nac_dir.name),str(nac.name))
+                # 加工後の画像がないならdownsampling
+                if result_file_path.exists():
+                    pass
+                else:
+                    cmd = ["gdalwarp","-tr",str(x_resolution),str(y_resolution), "-r","near",str(nac), str(result_file_path)]
+                    subprocess.call(cmd)
     
     def nac2png(self):
         if self.result_cut_lro_nac_png_path.exists():
@@ -251,6 +258,6 @@ if __name__ == "__main__":
     #指定しないならDockerにマウントしてあるデータセットのoriginを参照する
     else:
         dataset_process = DatasetProcess(pathlib.Path("/","dataset","origin"))
-    dataset_process.sldem2geotiff()
-    dataset_process.downsampling_nac("sldem2015")
-    dataset_process.cut_geotiff()
+    # dataset_process.sldem2geotiff()
+    # dataset_process.downsampling_nac()
+    # dataset_process.cut_geotiff()
