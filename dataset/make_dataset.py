@@ -8,10 +8,17 @@ import subprocess
 
 class DatasetProcess:
     def __init__(self,path):
+        """
+        ディレクトリの保存先は
+        origin
+        processedに分けておく
+        どちらもssd4Tの方に作っておくけどsldemだけは別、容量が大きすぎてSSDが死にます
+        """
         self.origin_data_path = path
+        self.hdd_origin_data_path   = pathlib.Path(self.origin_data_path).parent.parent.parent.joinpath("hdd3T","ibuka_dataset","origin")
         self.processed_path = self.origin_data_path.parent.joinpath("processed")
         self.dataset_path = self.origin_data_path.parent.joinpath("dataset")
-        self.result_sldem_path = self.processed_path.joinpath("sldem2015")
+        self.result_sldem_path = self.processed_path.joinpath("sldem")
         self.result_lro_nac_path = self.processed_path.joinpath("lro_nac")
         self.result_lro_nac_png_path = self.result_lro_nac_path.joinpath("png")
         self.result_lro_nac_tiff_path = self.result_lro_nac_path.joinpath("tiff")
@@ -21,7 +28,8 @@ class DatasetProcess:
         self.result_cut_sldem_png_path = self.result_cut_sldem_path.joinpath("png")
         self.result_cut_lro_nac_tiff_path = self.result_cut_lro_nac_path.joinpath("tiff")
         self.result_cut_lro_nac_png_path = self.result_cut_lro_nac_path.joinpath("png")
-        self.sldem_list =list(self.origin_data_path.joinpath("sldem2015").glob("**/*.LBL"))
+        self.sldem_list =list(self.hdd_origin_data_path.joinpath("sldem").glob("**/*"))
+        
         self.nac_list = list(self.origin_data_path.joinpath("lro_nac").glob("**/*"))
         # 加工したデータセットのディレクトリが存在しないなら作る
         if self.processed_path.exists():
@@ -35,17 +43,25 @@ class DatasetProcess:
             pass
         else:
             self.result_sldem_path.mkdir()
-        
-        for sldem in self.sldem_list:
-            sldem_file_name = pathlib.Path(sldem).with_suffix(".tiff").name
-            result_file_path = self.result_sldem_path.joinpath(sldem_file_name)
-
-            #Geotiffに変換したファイルがない時だけ作る
-            if result_file_path.exists():
+            
+        for sldem_dir in self.sldem_list:
+            save_dir = self.result_sldem_path.joinpath(sldem_dir.name)
+            
+            if save_dir.exists():
                 pass
             else:
-                cmd = ["gdal_translate",str(sldem), str(result_file_path)]
-                subprocess.call(cmd)
+                save_dir.mkdir()
+
+            for sldem_file in list(sldem_dir.glob("**/*.lbl")):
+                sldem_file_name = pathlib.Path(sldem_file).with_suffix(".tiff").name
+                result_file_path = save_dir.joinpath(sldem_file_name)
+                print(result_file_path)
+                #Geotiffに変換したファイルがない時だけ作る
+                if result_file_path.exists():
+                    pass
+                else:
+                    cmd = ["gdal_translate",str(sldem_file), str(result_file_path)]
+                    subprocess.call(cmd)
     
     def downsampling_nac(self,sldem_type="sldem"):
         # "加工後のlro nacを保存するディレクトリがないなら作る"
@@ -257,7 +273,7 @@ if __name__ == "__main__":
         dataset_process = DatasetProcess(sys.argv[1])
     #指定しないならDockerにマウントしてあるデータセットのoriginを参照する
     else:
-        dataset_process = DatasetProcess(pathlib.Path("/","dataset","origin"))
-    # dataset_process.sldem2geotiff()
+        dataset_process = DatasetProcess(pathlib.Path("/","dataset","ssd4T","ibuka_dataset","origin"))
+    dataset_process.sldem2geotiff()
     # dataset_process.downsampling_nac()
     # dataset_process.cut_geotiff()
