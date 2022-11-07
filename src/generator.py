@@ -1,6 +1,6 @@
 import torch
 import torchvision
-
+import tor
 class Generator(torch.nn.Module):
     def __init__(self):
         super(Generator,self).__init__()
