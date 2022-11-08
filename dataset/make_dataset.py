@@ -143,72 +143,77 @@ class DatasetProcess:
         else:
             self.result_cut_sldem_tiff_path.mkdir()
 
-        for nac in list(self.result_lro_nac_tiff_path.glob("**/*.tiff")):
-            origin_data = gdal.Open(str(nac))
-            width = origin_data.RasterXSize # 画像の横
-            height = origin_data.RasterYSize# 画像の縦
-            data_info = origin_data.GetGeoTransform()
-            # 小数点はカットしておく
-            # 画像のy座標始端
-            # x解像度とy解像度にそれぞれ縦、横をかけている
-            # 画像の上を始端にしている
-            """
-            GetGeoTransform()で出力される数列の意味は、
-            [始点端x座標（経度）,
-            x方向（西東）解像度,
-            回転,
-            始点端y座標（緯度）,
-            回転,
-            y方向（南北）解像度（北南方向であれば負）] 
-            """
-            cut_width = 256
-            cut_height = 256
-            cnt = 0
-            start_x = int(data_info[0]) # 画像のx座標始端
-            end_y = int(data_info[3] + width * data_info[4] + height * data_info[5])
-            end_x = int(data_info[0] + width * data_info[1] + height * data_info[2])
-            start_y = int(data_info[3])
-            sldem_path = self.find_sldem(start_x,start_y,end_x,end_y)
-            if not sldem_path:
-                print("nacに対応しているsldemが存在しないよ!")
-                continue
-            else:
-                pass
-            print("左上")
-            print(start_x,start_y)
-            print("右下")
-            print(end_x,end_y)
-            for i in range(0,height,cut_height):
-                for j in  range(0,width,cut_width):
-                    result_file_path = self.result_cut_lro_nac_tiff_path.joinpath(str(cnt)+str(nac.name))
-                    sldem_result_file_path = self.result_cut_sldem_tiff_path.joinpath(str(cnt)+str(nac.name))
-                    left_x = str(data_info[0] + j*data_info[1] + height * data_info[2])
-                    bottom_y = str(data_info[3] + (j+cut_width)*data_info[4] + (i+cut_height) * data_info[5])
-                    right_x = str(data_info[0] + (j+cut_width) * data_info[1] + (i+cut_height)*data_info[2])
-                    top_y = str(data_info[3] + j*data_info[4] + i * data_info[5])
-                    print("nacの左x,上y,右x,下y")
-                    print(left_x,top_y,right_x,bottom_y)
-                    if result_file_path.exists():
-                        continue
-                    else:
-                        cmd = ["gdal_translate","-projwin",left_x,top_y,right_x,bottom_y,str(nac),str(result_file_path)]
-                        subprocess.call(cmd)
-                        
-                        sldem_data = gdal.Open(str(sldem_path))
-                        sldem_width = sldem_data.RasterXSize # 画像の横
-                        sldem_height = sldem_data.RasterYSize# 画像の縦
-                        sldem_data_info = sldem_data.GetGeoTransform()
-                        sldem_left_x = str(sldem_data_info[0] + j*sldem_data_info[1] + sldem_height * sldem_data_info[2])
-                        sldem_bottom_y = str(sldem_data_info[3] + (j+cut_width)*sldem_data_info[4] + (i+cut_height) * sldem_data_info[5])
-                        sldem_right_x = str(sldem_data_info[0] + (j+cut_width) * sldem_data_info[1] + (i+cut_height)* sldem_data_info[2])
-                        sldem_top_y = str(sldem_data_info[3] + j*sldem_data_info[4] + i * sldem_data_info[5])
-                        print("sldem")
-                        print(left_x,top_y,right_x,bottom_y)
-                        cmd = ["gdal_translate","-projwin",left_x,top_y,right_x,bottom_y,str(sldem_path),str(sldem_result_file_path)]
-                        subprocess.call(cmd)
-                    cnt += 1
+        for nac_dir in list(self.result_lro_nac_path.glob("**/*")):
+            for nac in list(nac_dir.glob("**/*.TIF")):
+                origin_data = gdal.Open(str(nac))
+                width = origin_data.RasterXSize # 画像の横
+                height = origin_data.RasterYSize# 画像の縦
+                data_info = origin_data.GetGeoTransform()
+                # 小数点はカットしておく
+                # 画像のy座標始端
+                # x解像度とy解像度にそれぞれ縦、横をかけている
+                # 画像の上を始端にしている
+                """
+                GetGeoTransform()で出力される数列の意味は、
+                [始点端x座標（経度）,
+                x方向（西東）解像度,
+                回転,
+                始点端y座標（緯度）,
+                回転,
+                y方向（南北）解像度（北南方向であれば負）] 
+                """
+                cut_width = 256
+                cut_height = 256
+                cnt = 0
+                start_x = int(data_info[0]) # 画像のx座標始端
+                end_y = int(data_info[3] + width * data_info[4] + height * data_info[5])
+                end_x = int(data_info[0] + width * data_info[1] + height * data_info[2])
+                start_y = int(data_info[3])
+                sldem_path = self.find_sldem(start_x,start_y,end_x,end_y)
+                
+                if not sldem_path:
+                    print("nacに対応しているsldem見つからなかった!")
+                    continue
+                else:
+                    print("{nac}に対応しているファイルは{sldem}だね".format(nac,sldem_path))
+                
+                print("左上")
+                print(start_x,start_y)
+                print("右下")
+                print(end_x,end_y)
 
-            """
+                """
+                for i in range(0,height,cut_height):
+                    for j in  range(0,width,cut_width):
+                        result_file_path = self.result_cut_lro_nac_tiff_path.joinpath(str(cnt)+str(nac.name))
+                        sldem_result_file_path = self.result_cut_sldem_tiff_path.joinpath(str(cnt)+str(nac.name))
+                        left_x = str(data_info[0] + j*data_info[1] + height * data_info[2])
+                        bottom_y = str(data_info[3] + (j+cut_width)*data_info[4] + (i+cut_height) * data_info[5])
+                        right_x = str(data_info[0] + (j+cut_width) * data_info[1] + (i+cut_height)*data_info[2])
+                        top_y = str(data_info[3] + j*data_info[4] + i * data_info[5])
+                        print("nacの左x,上y,右x,下y")
+                        print(left_x,top_y,right_x,bottom_y)
+                        if result_file_path.exists():
+                            continue
+                        else:
+                            cmd = ["gdal_translate","-projwin",left_x,top_y,right_x,bottom_y,str(nac),str(result_file_path)]
+                            subprocess.call(cmd)
+                        
+                            sldem_data = gdal.Open(str(sldem_path))
+                            sldem_width = sldem_data.RasterXSize # 画像の横
+                            sldem_height = sldem_data.RasterYSize# 画像の縦
+                            sldem_data_info = sldem_data.GetGeoTransform()
+                            sldem_left_x = str(sldem_data_info[0] + j*sldem_data_info[1] + sldem_height * sldem_data_info[2])
+                            sldem_bottom_y = str(sldem_data_info[3] + (j+cut_width)*sldem_data_info[4] + (i+cut_height) * sldem_data_info[5])
+                            sldem_right_x = str(sldem_data_info[0] + (j+cut_width) * sldem_data_info[1] + (i+cut_height)* sldem_data_info[2])
+                            sldem_top_y = str(sldem_data_info[3] + j*sldem_data_info[4] + i * sldem_data_info[5])
+                            print("sldem")
+                            print(left_x,top_y,right_x,bottom_y)
+                            cmd = ["gdal_translate","-projwin",left_x,top_y,right_x,bottom_y,str(sldem_path),str(sldem_result_file_path)]
+                            subprocess.call(cmd)
+                        cnt += 1
+
+            
             for i in range(start_y,end_y,cut_height):
                 for j in range(start_x,end_x,cut_width):
                     result_file_path = self.result_cut_lro_nac_path.joinpath(str(cnt)+str(nac.name))
@@ -231,34 +236,36 @@ class DatasetProcess:
         NACのgeotiffの位置情報を元にして、それを内包しているsldemを探してくる
         戻り値は内包しているsldemのパス,見つからないときはFalse
         """
-        for sldem in list(self.result_sldem_path.glob("**/*.tiff")):
-            data = gdal.Open(str(sldem))
-            width = data.RasterXSize # 画像の横
-            height = data.RasterYSize# 画像の縦
-            data_info = data.GetGeoTransform()
-            sldem_start_x = int(data_info[0]) # 画像のx座標始端
-            sldem_start_y = int(data_info[3])
-            sldem_end_x = int(data_info[0] + width * data_info[1] + height * data_info[2])
-            sldem_end_y = int(data_info[3] + width * data_info[4] + height * data_info[5])
-            """
-            print("nacの情報")
-            print(nac_start_x,nac_start_y,nac_end_x,nac_end_y)
-            print("sldemの情報")
-            print(sldem_start_x,sldem_start_y,sldem_end_x,sldem_end_y)
-            """
-            if (sldem_start_x <= nac_start_x) and (nac_start_y <= sldem_start_y) and (sldem_end_x >= nac_end_x) and (sldem_end_y <= nac_end_y):
-                """
-                print("sldemの左x,上y,右x,下y")
+        for sldem_dir in list(self.result_sldem_path.glob("**/lon*")):
+            print(sldem_dir)
+            for sldem in list(sldem_dir.glob("**/*.tiff")):
+                data = gdal.Open(str(sldem))
+                width = data.RasterXSize # 画像の横
+                height = data.RasterYSize# 画像の縦
+                data_info = data.GetGeoTransform()
+                sldem_start_x = int(data_info[0]) # 画像のx座標始端
+                sldem_start_y = int(data_info[3])
+                sldem_end_x = int(data_info[0] + width * data_info[1] + height * data_info[2])
+                sldem_end_y = int(data_info[3] + width * data_info[4] + height * data_info[5])
                 """
                 print("nacの情報")
                 print(nac_start_x,nac_start_y,nac_end_x,nac_end_y)
                 print("sldemの情報")
                 print(sldem_start_x,sldem_start_y,sldem_end_x,sldem_end_y)
-                print(sldem) 
-                return sldem               
-            else:
-                pass
-        
+                """
+                if (sldem_start_x <= nac_start_x) and (nac_start_y <= sldem_start_y) and (sldem_end_x >= nac_end_x) and (sldem_end_y <= nac_end_y):
+                    """
+                    print("sldemの左x,上y,右x,下y")
+                    """
+                    print("nacの情報")
+                    print(nac_start_x,nac_start_y,nac_end_x,nac_end_y)
+                    print("sldemの情報")
+                    print(sldem_start_x,sldem_start_y,sldem_end_x,sldem_end_y)
+                    print(sldem) 
+                    return sldem               
+                else:
+                    pass
+            
         return False
     
     def geotiff2png(path,data_type):
@@ -274,6 +281,6 @@ if __name__ == "__main__":
     #指定しないならDockerにマウントしてあるデータセットのoriginを参照する
     else:
         dataset_process = DatasetProcess(pathlib.Path("/","dataset","ssd4T","ibuka_dataset","origin"))
-    dataset_process.sldem2geotiff()
+    # dataset_process.sldem2geotiff()
     # dataset_process.downsampling_nac()
-    # dataset_process.cut_geotiff()
+    dataset_process.cut_geotiff()
