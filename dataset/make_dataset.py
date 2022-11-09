@@ -169,34 +169,30 @@ class DatasetProcess:
                 end_y = int(data_info[3] + width * data_info[4] + height * data_info[5])
                 end_x = int(data_info[0] + width * data_info[1] + height * data_info[2])
                 start_y = int(data_info[3])
-                sldem_path = self.find_sldem(start_x,start_y,end_x,end_y)
                 
-                if not sldem_path:
-                    print("nacに対応しているsldem見つからなかった!")
-                    continue
-                else:
-                    print("{nac}に対応しているファイルは{sldem}だね".format(nac,sldem_path))
-                
-                print("左上")
-                print(start_x,start_y)
-                print("右下")
-                print(end_x,end_y)
-
-                """
                 for i in range(0,height,cut_height):
                     for j in  range(0,width,cut_width):
                         result_file_path = self.result_cut_lro_nac_tiff_path.joinpath(str(cnt)+str(nac.name))
                         sldem_result_file_path = self.result_cut_sldem_tiff_path.joinpath(str(cnt)+str(nac.name))
-                        left_x = str(data_info[0] + j*data_info[1] + height * data_info[2])
-                        bottom_y = str(data_info[3] + (j+cut_width)*data_info[4] + (i+cut_height) * data_info[5])
-                        right_x = str(data_info[0] + (j+cut_width) * data_info[1] + (i+cut_height)*data_info[2])
-                        top_y = str(data_info[3] + j*data_info[4] + i * data_info[5])
+                        left_x = data_info[0] + j*data_info[1] + height * data_info[2]
+                        bottom_y = data_info[3] + (j+cut_width)*data_info[4] + (i+cut_height) * data_info[5]
+                        right_x = data_info[0] + (j+cut_width) * data_info[1] + (i+cut_height)*data_info[2]
+                        top_y = data_info[3] + j*data_info[4] + i * data_info[5]
                         print("nacの左x,上y,右x,下y")
                         print(left_x,top_y,right_x,bottom_y)
+
+                        sldem_path = self.find_sldem(left_x,top_y,right_x,bottom_y)
+                
+                        if not sldem_path:
+                            print("nacに対応しているsldem見つからなかった!")
+                            continue
+                        else:
+                            print("{nac}に対応しているファイルは{sldem}だね".format(nac=nac,sldem=sldem_path))
+                        
                         if result_file_path.exists():
                             continue
                         else:
-                            cmd = ["gdal_translate","-projwin",left_x,top_y,right_x,bottom_y,str(nac),str(result_file_path)]
+                            cmd = ["gdal_translate","-projwin",str(left_x),str(top_y),str(right_x),str(bottom_y),str(nac),str(result_file_path)]
                             subprocess.call(cmd)
                         
                             sldem_data = gdal.Open(str(sldem_path))
@@ -209,11 +205,12 @@ class DatasetProcess:
                             sldem_top_y = str(sldem_data_info[3] + j*sldem_data_info[4] + i * sldem_data_info[5])
                             print("sldem")
                             print(left_x,top_y,right_x,bottom_y)
-                            cmd = ["gdal_translate","-projwin",left_x,top_y,right_x,bottom_y,str(sldem_path),str(sldem_result_file_path)]
+                            cmd = ["gdal_translate","-projwin",str(left_x),str(top_y),str(right_x),str(bottom_y),str(sldem_path),str(sldem_result_file_path)]
                             subprocess.call(cmd)
                         cnt += 1
+                        
 
-            
+            """
             for i in range(start_y,end_y,cut_height):
                 for j in range(start_x,end_x,cut_width):
                     result_file_path = self.result_cut_lro_nac_path.joinpath(str(cnt)+str(nac.name))
@@ -237,7 +234,6 @@ class DatasetProcess:
         戻り値は内包しているsldemのパス,見つからないときはFalse
         """
         for sldem_dir in list(self.result_sldem_path.glob("**/lon*")):
-            print(sldem_dir)
             for sldem in list(sldem_dir.glob("**/*.tiff")):
                 data = gdal.Open(str(sldem))
                 width = data.RasterXSize # 画像の横
