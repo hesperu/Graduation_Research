@@ -2,11 +2,14 @@ from torch.utils.tensorboard import SummaryWriter
 import time
 import torch
 import torchvision
+import pathlib
 
 #ここから自作クラスのインポート
 import generator
 import loss
 import discriminator
+import parameter
+import dataset
 
 class Pix2Pix():
     def __init__(self, config):
@@ -161,3 +164,31 @@ class Pix2Pix():
     def save_loss(self, train_info, batches_done):
         for k, v in train_info.items():
             self.writer.add_scalar(k,v,batches_done)
+
+
+if __name__ == "__main__":
+    opt = parameter.Opts()
+    param_save_path = pathlib.Path(__file__).parent.join("output","parameter.json")
+    opt.save_json()
+
+    model = Pix2Pix(opt)
+    dataset = dataset.AlignedDataset(opt)
+    dataloader = torch.utils.data.DataLoader(dataset,batch_size=opt.batch_size,shuffle=True)
+
+    import random
+
+    for epoch in range(1, opt.epochs + 1):
+        for batch_num, data in enumerate(dataloader):
+            batches_done = (epoch - 1) * len(dataloader) + batch_num
+            model.train(data,batches_done)
+
+            if batch_num % opt.log_interval == 0:
+                print(f'===> Epoch[{epoch}]({batch_num}/{len(dataloader)}): Loss_D: {model.lossD_real:.4f} Loss_G: {model.lossG_GAN:.4f}')
+            
+            if epoch % opt.save_data_interval == 0:
+                model.save_model(epoch)
+
+            if epoch % opt.save_image_interval == 0:
+                model.save_image(epoch)
+
+        model.update_learning_rate()
