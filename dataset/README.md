@@ -26,6 +26,12 @@ wget --continue -r -l 1 -A img,lbl -w 5 -nd https://data.darts.isas.jaxa.jp/pub/
 gdal_translate -of PNG -ot Byte -scale in_tiff.tif out_png_scaled.png
 ```
 -ot をUInt,IntではなくByteにしないと真っ黒の画像が生成されてしまう。 
+<span style="color: red; ">注意!</span>
+変換時には元のピクセルの最大と最小を指定してあげないとダメよ
+
+```sh
+gdal_translate -of PNG -ot Byte -scale 元の画像の最小ピクセル値 元の画像の最大ピクセル値 0 255 in_tiff.tif out_png_scaled.png
+```
 
 ### なんで？
 - gdal_translate だけでは数値型を上手く扱えないから
