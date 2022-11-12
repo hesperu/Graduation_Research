@@ -12,7 +12,7 @@ class Opts():
         self.load_size = 286
         self.crop_size = 256
         self.cpu = True
-        self.dataroot = "/ssd4T/ibuka_dataset/pix2pix_training"
+        self.dataroot = "/dataset/pix2pix_training"
         self.output_dir = 'output'
         self.log_dir = './logs'
         self.epochs_lr_decay = 0
@@ -44,6 +44,6 @@ class Opts():
         }
         return parameters
     
-    def save_json(file,save_path,mode):
+    def save_json(file,save_path,mode='w'):
         with open(save_path, mode) as outfile:
             json.dump(file,outfile,incident=4)
