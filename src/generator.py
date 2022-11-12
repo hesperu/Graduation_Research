@@ -1,6 +1,7 @@
 import torch
 import torchvision
 
+
 class Generator(torch.nn.Module):
     def __init__(self):
         super(Generator,self).__init__()
@@ -11,7 +12,7 @@ class Generator(torch.nn.Module):
     def _encoder_block(self,input,output,use_norm=True):
         # LeakyReLU + Downsampling
         layer = [
-            torch.nn.LeakyReLU(0.2, TRue)
+            torch.nn.LeakyReLU(0.2, True),
             torch.nn.Conv2d(input,output)
         ]
         # BatchNormalization

@@ -13,12 +13,19 @@ class AlignedDataset(torch.utils.data.Dataset):
     IMAGE_EXTENSIONS = ["png","png"]
 
     def __init__(self,config):
+        """
+        configはパラメータ設定
+        parameter.pyに定義している
+        """
         self.config = config
-        dir = pathlib.Path(config.dataroot,config.phase)
+        dir = pathlib.Path(config.dataroot)
     
     def _make_dataset(self,dir):
         """
         データセットディレクトリを引数にする
+        parameterで定義したdirは
+        /ssd4T/ibuka_dataset/pix2pix_training
+        この配下に学習用のデータセットを置いておく
         """
         nac_images = []
         sldem_images = []
@@ -29,13 +36,27 @@ class AlignedDataset(torch.utils.data.Dataset):
             print("ディレクトリ指定間違ってない？ {dir}は存在しないよ！".format(str(dir)))
             sys.exit(1)
         
+        """
+        pngとtiffの二種類を用意
+        IMAGE_EXTENSIONSで指定できるようにしておく
+        """
         nac_dir = dir.joinpath("nac",self.IMAGE_EXTENSIONS[0])
         sldem_dir = dir.joinpath("sldem",self.IMAGE_EXTENSIONS[1])
 
-        for file_name in nac_dir:
+        if nac_dir.exists():
+            pass
+        else:
+            nac_dir.mkdir()
+
+        if sldem_dir.exists():
+            pass
+        else:
+            sldem_dir.mkdir()
+
+        for file_name in list(nac_dir.glob("/*" + self.IMAGE_EXTENSIONS[0])):
             nac_images.append(file_name)
         
-        for file_name in sldem_dir:
+        for file_name in list(sldem_dir.glob("/*" + self.IMAGE_EXTENSIONS[1])):
             sldem_images.append(file_name)
 
         if len(nac_images) != len(sldem_images):
@@ -56,7 +77,8 @@ class AlignedDataset(torch.utils.data.Dataset):
         return sorted(paths,key=lambda x: int(x.name))
     
     def _align_dataset(self,dir,nac_dir,sldem_dir):
-        save_dir = dir.joinpath("dataset")
+        save_dir = dir.joinpath(self.IMAGE_EXTENSIONS[0] + "_dataset")
+        
         if save_dir.exists():
             pass
         else:
@@ -64,7 +86,9 @@ class AlignedDataset(torch.utils.data.Dataset):
 
         for i,nac_path,sldem_path in enumerate(zip(nac_dir,sldem_dir)):
             nac_img = Image.open(str(nac_path))
+            nac_img = nac_img.convert("L")
             sldem_img = Image.open(str(sldem_path))
+            sldem_img = sldem_img.convert("L")
 
             aligned_image = Image.new("GRAY",(nac_img.width + sldem_img.width, nac_img.height))
             aligned_image.paste(nac_img,(0,0))
