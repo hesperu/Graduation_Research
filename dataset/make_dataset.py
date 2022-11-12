@@ -169,7 +169,7 @@ class DatasetProcess:
                 end_y = int(data_info[3] + width * data_info[4] + height * data_info[5])
                 end_x = int(data_info[0] + width * data_info[1] + height * data_info[2])
                 start_y = int(data_info[3])
-                
+
                 for i in range(0,height,cut_height):
                     for j in  range(0,width,cut_width):
                         result_file_path = self.result_cut_lro_nac_tiff_path.joinpath(str(cnt)+str(nac.name))
@@ -269,6 +269,21 @@ class DatasetProcess:
         geotiffのパスを引数にしてpngを生成する
         data_typeはsldem、nacのどちらかを見る
         """
+    
+    def remove_disused(self):
+        """
+        cutgeotiffをやると黒い隙間がある画像が生成されるときがある。
+        lro_nacの方でそれを目視で削除する。
+        lro_nacの方にsldemと同じ位置の画像がないなら削除をする。
+        """
+        for sldem_path in list(self.result_cut_sldem_tiff_path.glob("*.TIF")):
+            file_name = sldem_path.name
+
+            if self.result_cut_lro_nac_tiff_path.joinpath(file_name).exists():
+                pass
+            else:
+                print(file_name)
+                sldem_path.unlink(missing_ok=False)
 
 if __name__ == "__main__":
     #元データのパスをプログラム実行時に指定する
@@ -279,4 +294,5 @@ if __name__ == "__main__":
         dataset_process = DatasetProcess(pathlib.Path("/","dataset","ssd4T","ibuka_dataset","origin"))
     # dataset_process.sldem2geotiff()
     # dataset_process.downsampling_nac()
-    dataset_process.cut_geotiff()
+    # dataset_process.cut_geotiff()
+    # dataset_process.remove_disused()
