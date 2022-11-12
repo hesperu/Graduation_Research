@@ -46,4 +46,4 @@ class Opts():
     
     def save_json(file,save_path,mode='w'):
         with open(save_path, mode) as outfile:
-            json.dump(file,outfile,incident=4)
+            json.dump(file,outfile,indent=4)
