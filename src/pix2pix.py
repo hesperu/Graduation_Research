@@ -18,12 +18,12 @@ class Pix2Pix():
         #生成器G
         self.netG = generator.Generator().to(self.config.device)
         #generatorの全ての関数を初期化
-        self.netG.apply(self._weights_init)
+        self.netG.apply(self._weight_init)
 
         #識別器 D
         self.netD = discriminator.Discriminator().to(self.config.device)
         #discriminatorのすべての関数を初期化
-        self.netD.apply(self._weights_init)
+        self.netD.apply(self._weight_init)
 
         # 生成器 G のモデルファイル読み込み(学習を引き続き行う場合)
         if self.config.path_to_generator != None:
