@@ -8,7 +8,26 @@ class Generator(torch.nn.Module):
         # U-Netのエンコーダー
         self.down0 = torch.nn.Conv2d(3,64,kernel_size=4,stride=2,padding=1)
         self.down1 = self._encoder_block(64,128)
-    
+        self.down2 = self._encoder_block(128, 256)
+        self.down3 = self._encoder_block(256, 512)
+        self.down4 = self._encoder_block(512, 512)
+        self.down5 = self._encoder_block(512, 512)
+        self.down6 = self._encoder_block(512, 512)
+        self.down7 = self._encoder_block(512, 512, use_norm=False)
+        # U-Net Decoder
+        self.up7 = self._decoder_block(512, 512)
+        self.up6 = self._decoder_block(1024, 512, use_dropout=True)
+        self.up5 = self._decoder_block(1024, 512, use_dropout=True)
+        self.up4 = self._decoder_block(1024, 512, use_dropout=True)
+        self.up3 = self._decoder_block(1024, 256)
+        self.up2 = self._decoder_block(512, 128)
+        self.up1 = self._decoder_block(256, 64)
+        
+        # G の最終出力
+        self.up0 = torch.nn.Sequential(
+            self._decoder_block(128, 3, use_norm=False),
+            torch.nn.Tanh(),
+        )
     def _encoder_block(self,input,output,use_norm=True):
         # LeakyReLU + Downsampling
         layer = [

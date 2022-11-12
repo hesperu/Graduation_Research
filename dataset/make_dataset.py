@@ -288,7 +288,7 @@ class DatasetProcess:
         
         for sldem_path in list(self.result_cut_sldem_tiff_path.glob("*.TIF")):
             result_path = self.result_cut_sldem_png_path.joinpath(sldem_path.with_suffix(".png").name)
-            cmd = ["gdal_translate","-of","PNG","-ot","UInt16","-scale",str(nac_path),str(result_path)]
+            cmd = ["gdal_translate","-of","PNG","-ot","UInt16","-scale",str(sldem_path),str(result_path)]
             subprocess.call(cmd)
     
     def remove_disused(self):
