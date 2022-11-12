@@ -15,6 +15,7 @@ class Opts():
         self.dataroot = "/dataset/pix2pix_training"
         self.output_dir = 'output'
         self.log_dir = './logs'
+        slef.lambda_L1 = 100.0
         self.epochs_lr_decay = 0
         self.epochs_lr_decay_start = -1
         self.path_to_discriminator = None
@@ -44,6 +45,6 @@ class Opts():
         }
         return parameters
     
-    def save_json(file,save_path,mode='w'):
+    def save_json(self,save_path,mode='w'):
         with open(save_path, mode) as outfile:
-            json.dump(file,outfile,indent=4)
+            json.dump(self.to_dict(),outfile,indent=4)
