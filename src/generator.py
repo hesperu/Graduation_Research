@@ -17,7 +17,7 @@ class Generator(torch.nn.Module):
         ]
         # BatchNormalization
         if use_norm:
-            layer.append(torch.nn.BathNorm2d(output))
+            layer.append(torch.nn.BatchNorm2d(output))
         
         return torch.nn.Sequential(*layer)
 
