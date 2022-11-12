@@ -12,7 +12,7 @@ class Opts():
         self.load_size = 286
         self.crop_size = 256
         self.cpu = True
-        self.dataroot = "/ssd4T/ibuka_dataset/pix2pix_training"
+        self.dataroot = "/dataset/pix2pix_training"
         self.output_dir = 'output'
         self.log_dir = './logs'
         self.epochs_lr_decay = 0
