@@ -264,11 +264,32 @@ class DatasetProcess:
             
         return False
     
-    def geotiff2png(path,data_type):
+    def geotiff2png(self):
         """
-        geotiffのパスを引数にしてpngを生成する
+        geotiffからpngを生成する
         data_typeはsldem、nacのどちらかを見る
         """
+
+        if self.result_cut_lro_nac_png_path.exists():
+            pass
+        else:
+            self.result_cut_lro_nac_png_path.mkdir()
+
+        for nac_path in list(self.result_cut_lro_nac_tiff_path.glob("*.TIF")):
+            result_path = self.result_cut_lro_nac_png_path.joinpath(nac_path.with_suffix(".png").name)
+            cmd = ["gdal_translate","-of","PNG","-ot","Byte","-scale",str(nac_path),str(result_path)]
+            subprocess.call(cmd)
+
+
+        if self.result_cut_sldem_png_path.exists():
+            pass
+        else:
+            self.result_cut_sldem_png_path.mkdir()
+        
+        for sldem_path in list(self.result_cut_sldem_tiff_path.glob("*.TIF")):
+            result_path = self.result_cut_sldem_png_path.joinpath(sldem_path.with_suffix(".png").name)
+            cmd = ["gdal_translate","-of","PNG","-ot","UInt16","-scale",str(nac_path),str(result_path)]
+            subprocess.call(cmd)
     
     def remove_disused(self):
         """
@@ -296,3 +317,4 @@ if __name__ == "__main__":
     # dataset_process.downsampling_nac()
     # dataset_process.cut_geotiff()
     # dataset_process.remove_disused()
+    # dataset_process.geotiff2png()
