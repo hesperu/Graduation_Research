@@ -15,10 +15,11 @@ class Opts():
         self.dataroot = "/dataset/pix2pix_training"
         self.output_dir = 'output'
         self.log_dir = './logs'
-        slef.lambda_L1 = 100.0
+        self.lambda_L1 = 100.0
         self.epochs_lr_decay = 0
         self.epochs_lr_decay_start = -1
         self.path_to_discriminator = None
+        self.path_to_generator = None
         self.device_name = "cuda:0"
         self.device = torch.device(self.device_name)
     
