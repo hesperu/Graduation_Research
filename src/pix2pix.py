@@ -169,7 +169,7 @@ class Pix2Pix():
 if __name__ == "__main__":
     opt = parameter.Opts()
     param_save_path = pathlib.Path(__file__).parent.join("output","parameter.json")
-    opt.save_json()
+    opt.save_json(param_save_path)
 
     model = Pix2Pix(opt)
     dataset = dataset.AlignedDataset(opt)

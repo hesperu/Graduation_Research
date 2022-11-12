@@ -1,5 +1,5 @@
 import json
-
+import torch
 
 class Opts():
     def __init__(self):
@@ -12,7 +12,7 @@ class Opts():
         self.load_size = 286
         self.crop_size = 256
         self.cpu = True
-        self.dataroot = ""
+        self.dataroot = "/ssd4T/ibuka_dataset/pix2pix_training"
         self.output_dir = 'output'
         self.log_dir = './logs'
         self.epochs_lr_decay = 0
@@ -33,9 +33,8 @@ class Opts():
             'crop_size': self.crop_size,
             'cpu': self.cpu,
             'dataroot': self.dataroot,
-            'output_dir' output : self.output_dir, output
+            'output_dir' : self.output_dir,
             'log_dir': self.log_dir,
-            'phase': self.phase,
             'lambda_L1': self.lambda_L1,
             'epochs_lr_decay': self.epochs_lr_decay,
             'epochs_lr_decay_start': self.epochs_lr_decay_start,
@@ -46,5 +45,5 @@ class Opts():
         return parameters
     
     def save_json(file,save_path,mode):
-        with open(param_save_path, mode) as outfile:
+        with open(save_path, mode) as outfile:
             json.dump(file,outfile,incident=4)
