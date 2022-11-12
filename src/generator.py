@@ -6,8 +6,8 @@ class Generator(torch.nn.Module):
     def __init__(self):
         super(Generator,self).__init__()
         # U-Netのエンコーダー
-        self.down0 = torch.nn.Conv2d(3,64,kernel_size=4,stride=2,padding=1)
-        self.down1 = self._encoder_block(64,128)
+        self.down0 = torch.nn.Conv2d(3, 64, kernel_size=4, stride=2, padding=1)
+        self.down1 = self._encoder_block(64, 128)
         self.down2 = self._encoder_block(128, 256)
         self.down3 = self._encoder_block(256, 512)
         self.down4 = self._encoder_block(512, 512)
@@ -32,7 +32,7 @@ class Generator(torch.nn.Module):
         # LeakyReLU + Downsampling
         layer = [
             torch.nn.LeakyReLU(0.2, True),
-            torch.nn.Conv2d(input,output,kernel_size=4)
+            torch.nn.Conv2d(input,output,kernel_size=4,stride=2,padding=1)
         ]
         # BatchNormalization
         if use_norm:

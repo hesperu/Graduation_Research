@@ -17,11 +17,19 @@ class Pix2Pix():
 
         #生成器G
         self.netG = generator.Generator().to(self.config.device)
+        if self.config.device_name == "cuda":
+            self.netG  = torch.nn.DataParallel(self.netG) # make parallel
+            torch.backends.cudnn.benchmark = True
+
         #generatorの全ての関数を初期化
         self.netG.apply(self._weight_init)
 
         #識別器 D
         self.netD = discriminator.Discriminator().to(self.config.device)
+        if self.config.device_name == "cuda":
+            self.netD  = torch.nn.DataParallel(self.netD) # make parallel
+            torch.backends.cudnn.benchmark = True
+
         #discriminatorのすべての関数を初期化
         self.netD.apply(self._weight_init)
 
@@ -178,6 +186,7 @@ if __name__ == "__main__":
     import random
 
     for epoch in range(1, opt.epochs + 1):
+        print(epoch)
         for batch_num, data in enumerate(dataloader):
             batches_done = (epoch - 1) * len(dataloader) + batch_num
             model.train(data,batches_done)

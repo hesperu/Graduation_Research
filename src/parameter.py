@@ -8,7 +8,7 @@ class Opts():
         self.save_image_interval = 10
         self.log_interval = 20
         self.sample_interval = 10
-        self.batch_size = 64
+        self.batch_size = 8
         self.load_size = 286
         self.crop_size = 256
         self.cpu = True
@@ -20,9 +20,9 @@ class Opts():
         self.epochs_lr_decay_start = -1
         self.path_to_discriminator = None
         self.path_to_generator = None
-        self.device_name = "cuda:0"
+        self.device_name = "cuda"
         self.device = torch.device(self.device_name)
-    
+        
     def to_dict(self):
         parameters = {
             'epochs': self.epochs,
@@ -42,7 +42,7 @@ class Opts():
             'epochs_lr_decay_start': self.epochs_lr_decay_start,
             'path_to_generator': self.path_to_generator,
             'path_to_discriminator': self.path_to_discriminator,
-            'device_name': self.device_name,
+            'device_name': self.device_name
         }
         return parameters
     
