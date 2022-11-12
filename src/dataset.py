@@ -43,6 +43,16 @@ class AlignedDataset(torch.utils.data.Dataset):
         nac_dir = dir.joinpath("nac",self.IMAGE_EXTENSIONS[0])
         sldem_dir = dir.joinpath("sldem",self.IMAGE_EXTENSIONS[1])
 
+        if nac_dir.exists():
+            pass
+        else:
+            nac_dir.mkdir()
+
+        if sldem_dir.exists():
+            pass
+        else:
+            sldem_dir.mkdir()
+
         for file_name in list(nac_dir.glob("/*" + self.IMAGE_EXTENSIONS[0])):
             nac_images.append(file_name)
         
