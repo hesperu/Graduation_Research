@@ -13,7 +13,7 @@ class Generator(torch.nn.Module):
         # LeakyReLU + Downsampling
         layer = [
             torch.nn.LeakyReLU(0.2, True),
-            torch.nn.Conv2d(input,output)
+            torch.nn.Conv2d(input,output,kernel_size=4)
         ]
         # BatchNormalization
         if use_norm:
