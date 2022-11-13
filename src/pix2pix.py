@@ -17,13 +17,21 @@ class Pix2Pix():
 
         #生成器G
         self.netG = generator.Generator().to(self.config.device)
+        if self.config.device_name == "cuda":
+            self.netG  = torch.nn.DataParallel(self.netG) # make parallel
+            torch.backends.cudnn.benchmark = True
+
         #generatorの全ての関数を初期化
-        self.netG.apply(self._weights_init)
+        self.netG.apply(self._weight_init)
 
         #識別器 D
         self.netD = discriminator.Discriminator().to(self.config.device)
+        if self.config.device_name == "cuda":
+            self.netD  = torch.nn.DataParallel(self.netD) # make parallel
+            torch.backends.cudnn.benchmark = True
+
         #discriminatorのすべての関数を初期化
-        self.netD.apply(self._weights_init)
+        self.netD.apply(self._weight_init)
 
         # 生成器 G のモデルファイル読み込み(学習を引き続き行う場合)
         if self.config.path_to_generator != None:
@@ -152,14 +160,14 @@ class Pix2Pix():
     def save_model(self,epoch):
         #モデルの保存をしておく
         output_dir = self.config.output_dir
-        torch.save(self.netG.state_dict(),"{output_dir}/pix2pix_G_epoch_{epoch}".format(output_dir,epoch))
-        torch.save(self.netD.state_dict(),"{output_dir}/pix2pix_D_epoch_{epoch}".format(output_dir,epoch))
+        torch.save(self.netG.state_dict(),"{output_dir}/pix2pix_G_epoch_{epoch}".format(output_dir=output_dir,epoch=epoch))
+        torch.save(self.netD.state_dict(),"{output_dir}/pix2pix_D_epoch_{epoch}".format(output_dir=output_dir,epoch=epoch))
 
     def save_image(self,epoch):
         #条件画像、生成画像、正解画像を並べて画像を保存
         output_image = torch.cat([self.realA, self.fakeB, self.realB],dim=3)
-        torchvision.utils.save_image(output_image,"{output_dir}/pix2pix_epoch_{epoch}.png".format(self.config.output_dir,epoch),normalize=True)
-        self.writer.add_image("image_epoch{epoch}".format(epoch),self.fakeB[0],epoch)
+        torchvision.utils.save_image(output_image,"{output_dir}/pix2pix_epoch_{epoch}.png".format(output_dir=self.config.output_dir,epoch=epoch),normalize=True)
+        self.writer.add_image("image_epoch{epoch}".format(epoch=epoch),self.fakeB[0],epoch)
     
     def save_loss(self, train_info, batches_done):
         for k, v in train_info.items():
@@ -168,8 +176,8 @@ class Pix2Pix():
 
 if __name__ == "__main__":
     opt = parameter.Opts()
-    param_save_path = pathlib.Path(__file__).parent.join("output","parameter.json")
-    opt.save_json(param_save_path)
+    param_save_path = pathlib.Path(__file__).parent.joinpath("output","parameter.json")
+    opt.save_json(str(param_save_path))
 
     model = Pix2Pix(opt)
     dataset = dataset.AlignedDataset(opt)
@@ -178,6 +186,7 @@ if __name__ == "__main__":
     import random
 
     for epoch in range(1, opt.epochs + 1):
+        print(epoch)
         for batch_num, data in enumerate(dataloader):
             batches_done = (epoch - 1) * len(dataloader) + batch_num
             model.train(data,batches_done)

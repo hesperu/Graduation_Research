@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu18.04 as base
+FROM nvidia/cuda:11.4.2-base-ubuntu20.04
 
 RUN apt-get update && apt-get install -y --no-install-recommends
 RUN apt-get -y install python3

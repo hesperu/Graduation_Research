@@ -10,7 +10,7 @@ class Discriminator(torch.nn.Module):
         # 2つの画像を結合したものが入力なので、チャネル数は3*2=6
 
         self.model = torch.nn.Sequential(
-            torch.nn.COnv2d(6,64,kernel_size=4,stride=2,padding=1),
+            torch.nn.Conv2d(6,64,kernel_size=4,stride=2,padding=1),
             torch.nn.LeakyReLU(0.2, True),
             self._layer(64,128),
             self._layer(128,256),
@@ -23,7 +23,7 @@ class Discriminator(torch.nn.Module):
         return torch.nn.Sequential(
             torch.nn.Conv2d(input,output,kernel_size=4,stride=stride,padding=1),
             torch.nn.BatchNorm2d(output),
-            torch.nn.LeaklyReLU(0.2,True)
+            torch.nn.LeakyReLU(0.2,True)
         )
     
     def forward(self,x):

@@ -4,3 +4,6 @@
 *.IMG
 *.LBL
 *.xml
+*.pyc
+src/output/
+src/logs/

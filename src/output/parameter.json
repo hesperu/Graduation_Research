@@ -1,0 +1,20 @@
+{
+    "epochs": 100,
+    "save_data_interval": 10,
+    "save_image_interval": 10,
+    "log_interval": 20,
+    "sample_interval": 10,
+    "batch_size": 8,
+    "load_size": 286,
+    "crop_size": 256,
+    "cpu": true,
+    "dataroot": "/dataset/pix2pix_training",
+    "output_dir": "./output",
+    "log_dir": "./logs",
+    "lambda_L1": 100.0,
+    "epochs_lr_decay": 0,
+    "epochs_lr_decay_start": -1,
+    "path_to_generator": null,
+    "path_to_discriminator": null,
+    "device_name": "cuda"
+}
