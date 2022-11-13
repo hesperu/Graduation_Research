@@ -160,14 +160,14 @@ class Pix2Pix():
     def save_model(self,epoch):
         #モデルの保存をしておく
         output_dir = self.config.output_dir
-        torch.save(self.netG.state_dict(),"{output_dir}/pix2pix_G_epoch_{epoch}".format(output_dir,epoch))
-        torch.save(self.netD.state_dict(),"{output_dir}/pix2pix_D_epoch_{epoch}".format(output_dir,epoch))
+        torch.save(self.netG.state_dict(),"{output_dir}/pix2pix_G_epoch_{epoch}".format(output_dir=output_dir,epoch=epoch))
+        torch.save(self.netD.state_dict(),"{output_dir}/pix2pix_D_epoch_{epoch}".format(output_dir=output_dir,epoch=epoch))
 
     def save_image(self,epoch):
         #条件画像、生成画像、正解画像を並べて画像を保存
         output_image = torch.cat([self.realA, self.fakeB, self.realB],dim=3)
-        torchvision.utils.save_image(output_image,"{output_dir}/pix2pix_epoch_{epoch}.png".format(self.config.output_dir,epoch),normalize=True)
-        self.writer.add_image("image_epoch{epoch}".format(epoch),self.fakeB[0],epoch)
+        torchvision.utils.save_image(output_image,"{output_dir}/pix2pix_epoch_{epoch}.png".format(output_dir=self.config.output_dir,epoch=epoch),normalize=True)
+        self.writer.add_image("image_epoch{epoch}".format(epoch=epoch),self.fakeB[0],epoch)
     
     def save_loss(self, train_info, batches_done):
         for k, v in train_info.items():

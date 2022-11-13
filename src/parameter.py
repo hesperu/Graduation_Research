@@ -13,7 +13,7 @@ class Opts():
         self.crop_size = 256
         self.cpu = True
         self.dataroot = "/dataset/pix2pix_training"
-        self.output_dir = 'output'
+        self.output_dir = './output'
         self.log_dir = './logs'
         self.lambda_L1 = 100.0
         self.epochs_lr_decay = 0

@@ -9,7 +9,7 @@
     "crop_size": 256,
     "cpu": true,
     "dataroot": "/dataset/pix2pix_training",
-    "output_dir": "output",
+    "output_dir": "./output",
     "log_dir": "./logs",
     "lambda_L1": 100.0,
     "epochs_lr_decay": 0,
