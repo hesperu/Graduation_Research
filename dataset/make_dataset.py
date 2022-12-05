@@ -7,19 +7,18 @@ import gdal
 import subprocess
 
 class DatasetProcess:
-    def __init__(self,path):
+    def __init__(self,path,sldem):
         """
-        ディレクトリの保存先は
-        origin
-        processedに分けておく
-        どちらもssd4Tの方に作っておくけどsldemだけは別、容量が大きすぎてSSDが死にます
+        各ディレクトリの保存先の親ディレクトリは/mnt/ibuka_dataset/
+        引数sldem,nacでデータ形式を指定
+        sldem:sldem2013 or sldem2015 
+        nac: lro_nac or lro_nac_mosaic
         """
         self.origin_data_path = path
-        self.hdd_origin_data_path   = pathlib.Path(self.origin_data_path).parent.parent.parent.joinpath("hdd3T","ibuka_dataset","origin")
         self.processed_path = self.origin_data_path.parent.joinpath("processed")
         self.dataset_path = self.origin_data_path.parent.joinpath("dataset")
-        self.result_sldem_path = self.processed_path.joinpath("sldem")
-        self.result_lro_nac_path = self.processed_path.joinpath("lro_nac")
+        self.result_sldem_path = self.processed_path.joinpath(sldem)
+        self.result_lro_nac_path = self.processed_path.joinpath(nac)
         self.result_lro_nac_png_path = self.result_lro_nac_path.joinpath("png")
         self.result_lro_nac_tiff_path = self.result_lro_nac_path.joinpath("tiff")
         self.result_cut_lro_nac_path = self.result_lro_nac_path.joinpath("cut")
@@ -28,14 +27,17 @@ class DatasetProcess:
         self.result_cut_sldem_png_path = self.result_cut_sldem_path.joinpath("png")
         self.result_cut_lro_nac_tiff_path = self.result_cut_lro_nac_path.joinpath("tiff")
         self.result_cut_lro_nac_png_path = self.result_cut_lro_nac_path.joinpath("png")
-        self.sldem_list =list(self.hdd_origin_data_path.joinpath("sldem").glob("**/*"))
+        self.sldem_list =list(self.origin_data_path.joinpath(sldem).glob("**/*"))
         
-        self.nac_list = list(self.origin_data_path.joinpath("lro_nac").glob("**/*"))
+        self.nac_list = list(self.origin_data_path.joinpath(nac).glob("**/*"))
         # 加工したデータセットのディレクトリが存在しないなら作る
         if self.processed_path.exists():
             pass
         else:
             self.processed_path.mkdir()
+        
+        self.sldem_type = sldem
+        self.nac_type = nac
     
     def sldem2geotiff(self):
         # "加工後のsldemを保存するディレクトリがないなら作る"
@@ -63,7 +65,7 @@ class DatasetProcess:
                     cmd = ["gdal_translate",str(sldem_file), str(result_file_path)]
                     subprocess.call(cmd)
     
-    def downsampling_nac(self,sldem_type="sldem"):
+    def downsampling_nac(self):
         # "加工後のlro nacを保存するディレクトリがないなら作る"
         if self.result_lro_nac_path.exists():
             pass
@@ -76,9 +78,9 @@ class DatasetProcess:
             self.result_lro_nac_tiff_path.mkdir()
 
         x_resolution,y_resolution = (0,0)
-        if sldem_type=="sldem":
+        if self.sldem_type=="sldem2013":
             x_resolution,y_resolution = (7.40,7.40)
-        elif sldem_type=="sldem2015":
+        elif self.sldem_type=="sldem2015":
             x_resolution,y_resolution = (59.225,59.225) #(118.45,118.45)
         else:
             print("not supported sldem")
@@ -306,13 +308,23 @@ class DatasetProcess:
                 print(file_name)
                 sldem_path.unlink(missing_ok=False)
 
+    def data_augmentation(self):
+        """
+        画像の水増し
+        対象とするのはsldem2015を使う場合だけ
+        """
+        if self.sldem_type == "sldem2013":
+            return
+        
+               
+
 if __name__ == "__main__":
     #元データのパスをプログラム実行時に指定する
     if len(sys.argv) > 1:
-        dataset_process = DatasetProcess(sys.argv[1])
+        dataset_process = DatasetProcess(sys.argv[1],str(sys.argv[2],str(sys.argv[3])))
     #指定しないならDockerにマウントしてあるデータセットのoriginを参照する
     else:
-        dataset_process = DatasetProcess(pathlib.Path("/","dataset","ssd4T","ibuka_dataset","origin"))
+        dataset_process = DatasetProcess(pathlib.Path("/","dataset","ssd4T","ibuka_dataset","origin"),"sldem2013","nac_mosaic")
     # dataset_process.sldem2geotiff()
     # dataset_process.downsampling_nac()
     # dataset_process.cut_geotiff()
