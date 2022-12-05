@@ -7,15 +7,15 @@ import gdal
 import subprocess
 
 class DatasetProcess:
-    def __init__(self,path,sldem):
+    def __init__(self,path,sldem,nac):
         """
         各ディレクトリの保存先の親ディレクトリは/mnt/ibuka_dataset/
         引数sldem,nacでデータ形式を指定
         sldem:sldem2013 or sldem2015 
         nac: lro_nac or lro_nac_mosaic
         """
-        self.origin_data_path = path
-        self.processed_path = self.origin_data_path.parent.joinpath("processed")
+        self.origin_data_path = pathlib.Path(path).joinpath("origin")
+        self.processed_path = pathlib.Path(path).joinpath("processed")
         self.dataset_path = self.origin_data_path.parent.joinpath("dataset")
         self.result_sldem_path = self.processed_path.joinpath(sldem)
         self.result_lro_nac_path = self.processed_path.joinpath(nac)
@@ -85,23 +85,36 @@ class DatasetProcess:
         else:
             print("not supported sldem")
             return
-
-        for nac_dir in self.nac_list:
-            # 画像の解像度が得られる
-            result_dir_path = self.result_lro_nac_path.joinpath(nac_dir.name)
-            if result_dir_path.exists():
-                pass
-            else:
-                result_dir_path.mkdir()
-
-            for nac in list(nac_dir.glob("**/*.TIF")):
-                result_file_path = self.result_lro_nac_path.joinpath(str(nac_dir.name),str(nac.name))
+        
+        if self.nac_type == "nac_mosaic":
+            for nac in self.nac_list:
+                result_file_path = self.result_lro_nac_path.joinpath(str(nac.name))
                 # 加工後の画像がないならdownsampling
                 if result_file_path.exists():
                     pass
                 else:
                     cmd = ["gdalwarp","-tr",str(x_resolution),str(y_resolution), "-r","near",str(nac), str(result_file_path)]
                     subprocess.call(cmd)
+        else:
+            """
+            nac_mosaicじゃない場合は、incidence angleの範囲ごとにデータセットを分けるから、ディレクトリごとにみないといけない
+            """
+            for nac_dir in self.nac_list:
+                # 画像の解像度が得られる
+                result_dir_path = self.result_lro_nac_path.joinpath(nac_dir.name)
+                if result_dir_path.exists():
+                    pass
+                else:
+                    result_dir_path.mkdir()
+
+                for nac in list(nac_dir.glob("**/*.tiff")):
+                    result_file_path = self.result_lro_nac_path.joinpath(str(nac_dir.name),str(nac.name))
+                    # 加工後の画像がないならdownsampling
+                    if result_file_path.exists():
+                        pass
+                    else:
+                        cmd = ["gdalwarp","-tr",str(x_resolution),str(y_resolution), "-r","near",str(nac), str(result_file_path)]
+                        subprocess.call(cmd)
     
     def nac2png(self):
         if self.result_cut_lro_nac_png_path.exists():
@@ -321,7 +334,8 @@ class DatasetProcess:
 if __name__ == "__main__":
     #元データのパスをプログラム実行時に指定する
     if len(sys.argv) > 1:
-        dataset_process = DatasetProcess(sys.argv[1],str(sys.argv[2],str(sys.argv[3])))
+        #ここの引数は最初がデータのパス、二つ目がsldemのバージョン、最後がnacがモザイクか否か
+        dataset_process = DatasetProcess(str(sys.argv[1]),str(sys.argv[2]),str(sys.argv[3]))
     #指定しないならDockerにマウントしてあるデータセットのoriginを参照する
     else:
         dataset_process = DatasetProcess(pathlib.Path("/","dataset","ssd4T","ibuka_dataset","origin"),"sldem2013","nac_mosaic")
