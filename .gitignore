@@ -7,3 +7,4 @@
 *.pyc
 src/output/
 src/logs/
+data_resource/
