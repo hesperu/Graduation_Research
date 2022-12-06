@@ -6,6 +6,11 @@ from unittest import result
 import gdal
 import subprocess
 
+from keras.preprocessing import image
+from PIL import Image
+import numpy as np
+import tensorflow as tf
+
 class DatasetProcess:
     def __init__(self,path,sldem,nac):
         """
@@ -46,17 +51,30 @@ class DatasetProcess:
         else:
             self.result_sldem_path.mkdir()
             
-        for sldem_dir in self.sldem_list:
-            save_dir = self.result_sldem_path.joinpath(sldem_dir.name)
+        if self.sldem_type == "sldem2013":
+            for sldem_dir in self.sldem_list:
+                save_dir = self.result_sldem_path.joinpath(sldem_dir.name)
             
-            if save_dir.exists():
-                pass
-            else:
-                save_dir.mkdir()
+                if save_dir.exists():
+                    pass
+                else:
+                    save_dir.mkdir()
 
-            for sldem_file in list(sldem_dir.glob("**/*.lbl")):
+                for sldem_file in list(sldem_dir.glob("**/*.lbl")):
+                    sldem_file_name = pathlib.Path(sldem_file).with_suffix(".tiff").name
+                    result_file_path = save_dir.joinpath(sldem_file_name)
+                    print(result_file_path)
+                    #Geotiffに変換したファイルがない時だけ作る
+                    if result_file_path.exists():
+                        pass
+                    else:
+                        cmd = ["gdal_translate",str(sldem_file), str(result_file_path)]
+                        subprocess.call(cmd)
+
+        elif self.sldem_type == "sldem2015":
+            for sldem_file in list(self.origin_data_path.joinpath(self.sldem_type).glob("**/*.LBL")):
                 sldem_file_name = pathlib.Path(sldem_file).with_suffix(".tiff").name
-                result_file_path = save_dir.joinpath(sldem_file_name)
+                result_file_path = self.result_sldem_path.joinpath(sldem_file_name)
                 print(result_file_path)
                 #Geotiffに変換したファイルがない時だけ作る
                 if result_file_path.exists():
@@ -64,6 +82,10 @@ class DatasetProcess:
                 else:
                     cmd = ["gdal_translate",str(sldem_file), str(result_file_path)]
                     subprocess.call(cmd)
+
+        else:
+            print("sldemにそんなものはない")
+            return 
     
     def downsampling_nac(self):
         # "加工後のlro nacを保存するディレクトリがないなら作る"
@@ -159,7 +181,7 @@ class DatasetProcess:
             self.result_cut_sldem_tiff_path.mkdir()
         
         if self.nac_type == "nac_mosaic":
-            for nac in self.nac_list:
+            for nac in list(self.result_lro_nac_path.glob("**/*.tiff")):
                 origin_data = gdal.Open(str(nac))
                 width = origin_data.RasterXSize # 画像の横
                 height = origin_data.RasterYSize# 画像の縦
@@ -177,8 +199,8 @@ class DatasetProcess:
                 回転,
                 y方向（南北）解像度（北南方向であれば負）] 
                 """
-                cut_width = 256
-                cut_height = 256
+                cut_width = 320
+                cut_height = 320
                 cnt = 0
                 start_x = int(data_info[0]) # 画像のx座標始端
                 end_y = int(data_info[3] + width * data_info[4] + height * data_info[5])
@@ -186,21 +208,22 @@ class DatasetProcess:
                 start_y = int(data_info[3])
 
                 for i in range(0,height,cut_height):
-                    for j in  range(0,width,cut_width):
+                    for j in range(20,width,cut_width):
                         """
                         nacモザイクの場合、カットする座標は真ん中から取る
-                        x座標は、始点が画像の10%のところから
+                        x座標は、始点が画像の15%のところから
                         y座標は、始点が画像の0%のとこでいい
                         """
                         result_file_path = self.result_cut_lro_nac_tiff_path.joinpath(str(cnt)+str(nac.name))
                         sldem_result_file_path = self.result_cut_sldem_tiff_path.joinpath(str(cnt)+str(nac.name))
-                        left_x = data_info[0] + (j*data_info[1]+width*0.1) + height * data_info[2]
+                        left_x = data_info[0] + (j*data_info[1]) + height * data_info[2]
                         bottom_y = data_info[3] + (j+cut_width)*data_info[4] + (i+cut_height) * data_info[5]
-                        right_x = data_info[0] + (j+cut_width+width*0.1) * data_info[1] + (i+cut_height)*data_info[2]
+                        right_x = data_info[0] + (j+cut_width) * data_info[1] + (i+cut_height)*data_info[2]
                         top_y = data_info[3] + j*data_info[4] + i * data_info[5]
+                        """
                         print("nacの左x,上y,右x,下y")
                         print(left_x,top_y,right_x,bottom_y)
-
+                        """
                         sldem_path = self.find_sldem(left_x,top_y,right_x,bottom_y)
                 
                         if not sldem_path:
@@ -319,8 +342,39 @@ class DatasetProcess:
         NACのgeotiffの位置情報を元にして、それを内包しているsldemを探してくる
         戻り値は内包しているsldemのパス,見つからないときはFalse
         """
-        for sldem_dir in list(self.result_sldem_path.glob("**/lon*")):
-            for sldem in list(sldem_dir.glob("**/*.tiff")):
+
+        if self.sldem_type == "sldem2013":
+            for sldem_dir in list(self.result_sldem_path.glob("**/lon*")):
+                for sldem in list(sldem_dir.glob("**/*.tiff")):
+                    data = gdal.Open(str(sldem))
+                    width = data.RasterXSize # 画像の横
+                    height = data.RasterYSize# 画像の縦
+                    data_info = data.GetGeoTransform()
+                    sldem_start_x = int(data_info[0]) # 画像のx座標始端
+                    sldem_start_y = int(data_info[3])
+                    sldem_end_x = int(data_info[0] + width * data_info[1] + height * data_info[2])
+                    sldem_end_y = int(data_info[3] + width * data_info[4] + height * data_info[5])
+                    """
+                    print("nacの情報")
+                    print(nac_start_x,nac_start_y,nac_end_x,nac_end_y)
+                    print("sldemの情報")
+                    print(sldem_start_x,sldem_start_y,sldem_end_x,sldem_end_y)
+                    """
+                    if (sldem_start_x <= nac_start_x) and (nac_start_y <= sldem_start_y) and (sldem_end_x >= nac_end_x) and (sldem_end_y <= nac_end_y):
+                        """
+                        print("sldemの左x,上y,右x,下y")
+                        """
+                        print("nacの情報")
+                        print(nac_start_x,nac_start_y,nac_end_x,nac_end_y)
+                        print("sldemの情報")
+                        print(sldem_start_x,sldem_start_y,sldem_end_x,sldem_end_y)
+                        print(sldem) 
+                        return sldem               
+                    else:
+                        pass
+    
+        elif self.sldem_type == "sldem2015":
+            for sldem in list(self.result_sldem_path.glob("**/*.tiff")):
                 data = gdal.Open(str(sldem))
                 width = data.RasterXSize # 画像の横
                 height = data.RasterYSize# 画像の縦
@@ -347,7 +401,9 @@ class DatasetProcess:
                     return sldem               
                 else:
                     pass
-            
+        
+        else:
+            print("sldemの引数が間違ってるよ")
         return False
     
     def geotiff2png(self):
@@ -361,7 +417,7 @@ class DatasetProcess:
         else:
             self.result_cut_lro_nac_png_path.mkdir()
 
-        for nac_path in list(self.result_cut_lro_nac_tiff_path.glob("*.TIF")):
+        for nac_path in list(self.result_cut_lro_nac_tiff_path.glob("*.tiff")):
             result_path = self.result_cut_lro_nac_png_path.joinpath(nac_path.with_suffix(".png").name)
             cmd = ["gdal_translate","-of","PNG","-ot","Byte","-scale",str(nac_path),str(result_path)]
             subprocess.call(cmd)
@@ -372,9 +428,12 @@ class DatasetProcess:
         else:
             self.result_cut_sldem_png_path.mkdir()
         
-        for sldem_path in list(self.result_cut_sldem_tiff_path.glob("*.TIF")):
+        for sldem_path in list(self.result_cut_sldem_tiff_path.glob("*.tiff")):
             result_path = self.result_cut_sldem_png_path.joinpath(sldem_path.with_suffix(".png").name)
-            cmd = ["gdal_translate","-of","PNG","-ot","UInt16","-scale",str(sldem_path),str(result_path)]
+            if self.sldem_type == "sldem2015":
+                cmd = ["gdal_translate","-of","PNG","-ot","Float32","-scale",str(sldem_path),str(result_path)]
+            else:
+                cmd = ["gdal_translate","-of","PNG","-ot","UInt16","-scale",str(sldem_path),str(result_path)]
             subprocess.call(cmd)
     
     def remove_disused(self):
@@ -383,7 +442,8 @@ class DatasetProcess:
         lro_nacの方でそれを目視で削除する。
         lro_nacの方にsldemと同じ位置の画像がないなら削除をする。
         """
-        for sldem_path in list(self.result_cut_sldem_tiff_path.glob("*.TIF")):
+
+        for sldem_path in list(self.result_cut_sldem_tiff_path.glob("*.tiff")):
             file_name = sldem_path.name
 
             if self.result_cut_lro_nac_tiff_path.joinpath(file_name).exists():
@@ -391,17 +451,8 @@ class DatasetProcess:
             else:
                 print(file_name)
                 sldem_path.unlink(missing_ok=False)
-
-    def data_augmentation(self):
-        """
-        画像の水増し
-        対象とするのはsldem2015を使う場合だけ
-        """
-        if self.sldem_type == "sldem2013":
-            return
-        
-               
-
+    
+    
 if __name__ == "__main__":
     #元データのパスをプログラム実行時に指定する
     if len(sys.argv) > 1:
@@ -412,6 +463,7 @@ if __name__ == "__main__":
         dataset_process = DatasetProcess(pathlib.Path("/","dataset","ssd4T","ibuka_dataset","origin"),"sldem2013","nac_mosaic")
     # dataset_process.sldem2geotiff()
     # dataset_process.downsampling_nac()
-    # dataset_process.cut_geotiff()
+    dataset_process.cut_geotiff()
     # dataset_process.remove_disused()
     # dataset_process.geotiff2png()
+    # dataset_process.data_augmentation()
