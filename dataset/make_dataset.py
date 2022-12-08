@@ -10,6 +10,7 @@ from keras.preprocessing import image
 from PIL import Image
 import numpy as np
 import tensorflow as tf
+Image.MAX_IMAGE_PIXELS = 1000000000
 
 class DatasetProcess:
     def __init__(self,path,sldem,nac):
@@ -103,7 +104,7 @@ class DatasetProcess:
         if self.sldem_type=="sldem2013":
             x_resolution,y_resolution = (7.40,7.40)
         elif self.sldem_type=="sldem2015":
-            x_resolution,y_resolution = (59.225,59.225) #(118.45,118.45)
+            x_resolution,y_resolution = (59.22529380000000,-59.22529380000000) #(118.45,118.45)
         else:
             print("not supported sldem")
             return
@@ -154,7 +155,7 @@ class DatasetProcess:
                 cmd = ["gdal_translate","-of","PNG", "-ot", "Byte", "-scale",str(nac),str(result_file_path)]
                 subprocess.call(cmd)
     
-    def cut_geotiff(self):
+    def cut_geotiff_by_gdal(self):
         if self.result_cut_lro_nac_path.exists():
             pass
         else:
@@ -217,20 +218,22 @@ class DatasetProcess:
                         result_file_path = self.result_cut_lro_nac_tiff_path.joinpath(str(cnt)+str(nac.name))
                         sldem_result_file_path = self.result_cut_sldem_tiff_path.joinpath(str(cnt)+str(nac.name))
                         left_x = data_info[0] + (j*data_info[1]) + height * data_info[2]
-                        bottom_y = data_info[3] + (j+cut_width)*data_info[4] + (i+cut_height) * data_info[5]
-                        right_x = data_info[0] + (j+cut_width) * data_info[1] + (i+cut_height)*data_info[2]
-                        top_y = data_info[3] + j*data_info[4] + i * data_info[5]
-                        """
+                        bottom_y = data_info[3] + (j+cut_width) * data_info[4] + (i+cut_height) * data_info[5]
+                        right_x = data_info[0] + (j+cut_width) * data_info[1] + (i+cut_height) * data_info[2]
+                        top_y = data_info[3] + j * data_info[4] + i * data_info[5]
+                        print("###################")
                         print("nacの左x,上y,右x,下y")
                         print(left_x,top_y,right_x,bottom_y)
-                        """
+                        print("###################")
+                        
                         sldem_path = self.find_sldem(left_x,top_y,right_x,bottom_y)
                 
                         if not sldem_path:
                             print("nacに対応しているsldem見つからなかった!")
                             continue
                         else:
-                            print("{nac}に対応しているファイルは{sldem}だね".format(nac=nac,sldem=sldem_path))
+                            pass
+                            # print("{nac}に対応しているファイルは{sldem}だね".format(nac=nac,sldem=sldem_path))
                         
                         if result_file_path.exists():
                             continue
@@ -242,12 +245,14 @@ class DatasetProcess:
                             sldem_width = sldem_data.RasterXSize # 画像の横
                             sldem_height = sldem_data.RasterYSize# 画像の縦
                             sldem_data_info = sldem_data.GetGeoTransform()
-                            sldem_left_x = str(sldem_data_info[0] + j*sldem_data_info[1] + sldem_height * sldem_data_info[2])
-                            sldem_bottom_y = str(sldem_data_info[3] + (j+cut_width)*sldem_data_info[4] + (i+cut_height) * sldem_data_info[5])
-                            sldem_right_x = str(sldem_data_info[0] + (j+cut_width) * sldem_data_info[1] + (i+cut_height)* sldem_data_info[2])
-                            sldem_top_y = str(sldem_data_info[3] + j*sldem_data_info[4] + i * sldem_data_info[5])
+                            sldem_left_x = str(data_info[0] + j*sldem_data_info[1] + sldem_height * sldem_data_info[2])
+                            sldem_bottom_y = str(data_info[3] + (j+cut_width)*sldem_data_info[4] + (i+cut_height) * sldem_data_info[5])
+                            sldem_right_x = str(data_info[0] + (j+cut_width) * sldem_data_info[1] + (i+cut_height)* sldem_data_info[2])
+                            sldem_top_y = str(data_info[3] + j*sldem_data_info[4] + i * sldem_data_info[5])
+                            print("###################")
                             print("sldem")
-                            print(left_x,top_y,right_x,bottom_y)
+                            print(sldem_left_x,sldem_top_y,sldem_right_x,sldem_bottom_y)
+                            print("###################")
                             cmd = ["gdal_translate","-projwin",str(left_x),str(top_y),str(right_x),str(bottom_y),str(sldem_path),str(sldem_result_file_path)]
                             subprocess.call(cmd)
                         cnt += 1
@@ -288,8 +293,10 @@ class DatasetProcess:
                             bottom_y = data_info[3] + (j+cut_width)*data_info[4] + (i+cut_height) * data_info[5]
                             right_x = data_info[0] + (j+cut_width) * data_info[1] + (i+cut_height)*data_info[2]
                             top_y = data_info[3] + j*data_info[4] + i * data_info[5]
+                            print("####################")
                             print("nacの左x,上y,右x,下y")
                             print(left_x,top_y,right_x,bottom_y)
+                            print("###################")
 
                             sldem_path = self.find_sldem(left_x,top_y,right_x,bottom_y)
                 
@@ -336,6 +343,51 @@ class DatasetProcess:
                         cnt += 1
                          """
 
+    def cut_geotiff(self):
+        if self.result_cut_lro_nac_path.exists():
+            pass
+        else:
+            self.result_cut_lro_nac_path.mkdir()
+        
+        if self.result_cut_lro_nac_tiff_path.exists():
+            pass
+        else:
+            self.result_cut_lro_nac_tiff_path.mkdir()
+        
+        if self.result_cut_sldem_path.exists():
+            pass
+        else:
+            self.result_cut_sldem_path.mkdir()
+
+        if self.result_cut_sldem_png_path.exists():
+            pass
+        else:
+            self.result_cut_sldem_png_path.mkdir()
+        
+        if self.result_cut_sldem_tiff_path.exists():
+            pass
+        else:
+            self.result_cut_sldem_tiff_path.mkdir()
+
+        if self.nac_type == "nac_mosaic":
+            for sldem in list(self.result_sldem_path.glob("**/*.tiff")):
+                sldem_img = Image.open(sldem)
+                print(sldem)
+                nac_img = Image.open(self.result_lro_nac_path.joinpath(sldem.name))
+                cut_width = 320
+                cut_height = 320
+                #切り出しスタート位置の係数。例えばper=0.1だと画像の10%のところからスタート
+                height_per = 0.1
+                width_per = 0.1
+                cnt = 0
+
+                for i in range(int(sldem_img.height*height_per),sldem_img.height,cut_height):
+                    for j in range(int(sldem_img.width*width_per),sldem_img.width,cut_width):
+                        sldem_crop = sldem_img.crop((j,i,j+cut_width,i+cut_height))
+                        nac_crop = nac_img.crop((j,i,j+cut_width,i+cut_height))
+                        sldem_crop.save(self.result_cut_sldem_tiff_path.joinpath(sldem.stem+str(cnt).zfill(3)+sldem.suffix))
+                        nac_crop.save(self.result_cut_lro_nac_tiff_path.joinpath(sldem.stem+str(cnt).zfill(3)+sldem.suffix))
+                        cnt += 1
     
     def find_sldem(self,nac_start_x,nac_start_y,nac_end_x,nac_end_y):
         """
@@ -360,7 +412,7 @@ class DatasetProcess:
                     print("sldemの情報")
                     print(sldem_start_x,sldem_start_y,sldem_end_x,sldem_end_y)
                     """
-                    if (sldem_start_x <= nac_start_x) and (nac_start_y <= sldem_start_y) and (sldem_end_x >= nac_end_x) and (sldem_end_y <= nac_end_y):
+                    if (sldem_start_x <= nac_start_x) and (sldem_start_y <= nac_start_y) and (sldem_end_x >= nac_end_x) and (sldem_end_y <= nac_end_y):
                         """
                         print("sldemの左x,上y,右x,下y")
                         """
@@ -391,14 +443,14 @@ class DatasetProcess:
                 """
                 if (sldem_start_x <= nac_start_x) and (nac_start_y <= sldem_start_y) and (sldem_end_x >= nac_end_x) and (sldem_end_y <= nac_end_y):
                     """
-                    print("sldemの左x,上y,右x,下y")
-                    """
                     print("nacの情報")
                     print(nac_start_x,nac_start_y,nac_end_x,nac_end_y)
                     print("sldemの情報")
                     print(sldem_start_x,sldem_start_y,sldem_end_x,sldem_end_y)
                     print(sldem) 
-                    return sldem               
+                    """
+                    return sldem
+                    
                 else:
                     pass
         
@@ -419,7 +471,7 @@ class DatasetProcess:
 
         for nac_path in list(self.result_cut_lro_nac_tiff_path.glob("*.tiff")):
             result_path = self.result_cut_lro_nac_png_path.joinpath(nac_path.with_suffix(".png").name)
-            cmd = ["gdal_translate","-of","PNG","-ot","Byte","-scale",str(nac_path),str(result_path)]
+            cmd = ["gdal_translate","-of","PNG","-ot","Byte",str(nac_path),str(result_path)]
             subprocess.call(cmd)
 
 
@@ -431,9 +483,9 @@ class DatasetProcess:
         for sldem_path in list(self.result_cut_sldem_tiff_path.glob("*.tiff")):
             result_path = self.result_cut_sldem_png_path.joinpath(sldem_path.with_suffix(".png").name)
             if self.sldem_type == "sldem2015":
-                cmd = ["gdal_translate","-of","PNG","-ot","Float32","-scale",str(sldem_path),str(result_path)]
+                cmd = ["gdal_translate","-of","PNG","-ot","Float32",str(sldem_path),str(result_path)]
             else:
-                cmd = ["gdal_translate","-of","PNG","-ot","UInt16","-scale",str(sldem_path),str(result_path)]
+                cmd = ["gdal_translate","-of","PNG","-ot","UInt16",str(sldem_path),str(result_path)]
             subprocess.call(cmd)
     
     def remove_disused(self):
@@ -445,13 +497,13 @@ class DatasetProcess:
 
         for sldem_path in list(self.result_cut_sldem_tiff_path.glob("*.tiff")):
             file_name = sldem_path.name
-
+            
             if self.result_cut_lro_nac_tiff_path.joinpath(file_name).exists():
                 pass
             else:
                 print(file_name)
                 sldem_path.unlink(missing_ok=False)
-    
+
     
 if __name__ == "__main__":
     #元データのパスをプログラム実行時に指定する
@@ -463,7 +515,7 @@ if __name__ == "__main__":
         dataset_process = DatasetProcess(pathlib.Path("/","dataset","ssd4T","ibuka_dataset","origin"),"sldem2013","nac_mosaic")
     # dataset_process.sldem2geotiff()
     # dataset_process.downsampling_nac()
-    dataset_process.cut_geotiff()
+    # dataset_process.cut_geotiff()
     # dataset_process.remove_disused()
     # dataset_process.geotiff2png()
     # dataset_process.data_augmentation()
