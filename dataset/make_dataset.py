@@ -462,6 +462,9 @@ class DatasetProcess:
         """
         geotiffからpngを生成する
         data_typeはsldem、nacのどちらかを見る
+        !!!!!!!!!!!!!!!
+        png生成すると何故か位置がずれる! 
+        !!!!!!!!!!!!!!!
         """
 
         if self.result_cut_lro_nac_png_path.exists():
