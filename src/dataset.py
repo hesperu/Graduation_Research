@@ -12,7 +12,7 @@ class AlignedDataset(torch.utils.data.Dataset):
     ただ並べるだけで、元の画像の処理方法はめんどいのでdatasetに置いてある
     """
 
-    IMAGE_EXTENSIONS = ["png","png"]
+    IMAGE_EXTENSIONS = ["tiff","tiff"]
 
     def __init__(self,config):
         """
@@ -46,6 +46,7 @@ class AlignedDataset(torch.utils.data.Dataset):
         """
         nac_dir = dir.joinpath("nac",self.IMAGE_EXTENSIONS[0])
         sldem_dir = dir.joinpath("sldem",self.IMAGE_EXTENSIONS[1])
+        print(nac_dir)
 
         if nac_dir.exists():
             pass
@@ -57,10 +58,10 @@ class AlignedDataset(torch.utils.data.Dataset):
         else:
             sldem_dir.mkdir()
 
-        for file_name in list(nac_dir.glob("*" + self.IMAGE_EXTENSIONS[0])):
+        for file_name in list(nac_dir.glob("*." + self.IMAGE_EXTENSIONS[0])):
             nac_images.append(file_name)
         
-        for file_name in list(sldem_dir.glob("*" + self.IMAGE_EXTENSIONS[1])):
+        for file_name in list(sldem_dir.glob("*." + self.IMAGE_EXTENSIONS[1])):
             sldem_images.append(file_name)
 
         if len(nac_images) != len(sldem_images):
@@ -70,7 +71,7 @@ class AlignedDataset(torch.utils.data.Dataset):
         nac_images = self._paths_sorted(nac_images)
         sldem_images = self._paths_sorted(sldem_images)
         dataset_list = self._align_dataset(dir,nac_images,sldem_images)
-        
+
         return dataset_list
 
     def _paths_sorted(self,paths):
@@ -91,7 +92,7 @@ class AlignedDataset(torch.utils.data.Dataset):
 
         for i,(nac_path,sldem_path) in enumerate(zip(nac_dir,sldem_dir)):
             nac_img = Image.open(str(nac_path))
-            nac_img = nac_img.convert("L")
+            #nac_img = nac_img.convert("L")
             sldem_img = Image.open(str(sldem_path))
             sldem_img = sldem_img.convert("L")
 
@@ -145,4 +146,4 @@ class AlignedDataset(torch.utils.data.Dataset):
         A = transform(AB.crop((0,0,half_w,h)))
         B = transform(AB.crop((half_w,0,w,h)))
 
-        return {'A':B, 'B':A, 'A_paths':AB_path, 'B_paths':AB_path}
+        return {'A':A, 'B':B, 'A_paths':AB_path, 'B_paths':AB_path}
