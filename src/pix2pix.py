@@ -85,7 +85,7 @@ class Pix2Pix():
     def train(self,data,batches_done):
         #ドメインAのラベル画像とドメインBの正解画像を設定する
         self.realA = data['A'].to(self.config.device)
-        self.realB = data['A'].to(self.config.device)
+        self.realB = data['B'].to(self.config.device)
 
         #生成器GでドメインBの画像生成
         fakeB = self.netG(self.realA)
@@ -166,7 +166,7 @@ class Pix2Pix():
     def save_image(self,epoch):
         #条件画像、生成画像、正解画像を並べて画像を保存
         output_image = torch.cat([self.realA, self.fakeB, self.realB],dim=3)
-        torchvision.utils.save_image(output_image,"{output_dir}/pix2pix_epoch_{epoch}.png".format(output_dir=self.config.output_dir,epoch=epoch),normalize=True)
+        torchvision.utils.save_image(output_image,"{output_dir}/pix2pix_epoch_{epoch}.tiff".format(output_dir=self.config.output_dir,epoch=epoch),normalize=True)
         self.writer.add_image("image_epoch{epoch}".format(epoch=epoch),self.fakeB[0],epoch)
     
     def save_loss(self, train_info, batches_done):
@@ -186,7 +186,6 @@ if __name__ == "__main__":
     import random
 
     for epoch in range(1, opt.epochs + 1):
-        print(epoch)
         for batch_num, data in enumerate(dataloader):
             batches_done = (epoch - 1) * len(dataloader) + batch_num
             model.train(data,batches_done)

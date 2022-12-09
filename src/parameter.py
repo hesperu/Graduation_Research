@@ -3,9 +3,9 @@ import torch
 
 class Opts():
     def __init__(self):
-        self.epochs = 100
-        self.save_data_interval = 10
-        self.save_image_interval = 10
+        self.epochs = 10000
+        self.save_data_interval = 100
+        self.save_image_interval = 100
         self.log_interval = 20
         self.sample_interval = 10
         self.batch_size = 8
