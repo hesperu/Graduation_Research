@@ -160,8 +160,8 @@ class Pix2Pix():
     def save_model(self,epoch):
         #モデルの保存をしておく
         output_dir = self.config.output_dir
-        torch.save(self.netG.state_dict(),"{output_dir}/pix2pix_G_epoch_{epoch}".format(output_dir=output_dir,epoch=epoch))
-        torch.save(self.netD.state_dict(),"{output_dir}/pix2pix_D_epoch_{epoch}".format(output_dir=output_dir,epoch=epoch))
+        torch.save(self.netG.state_dict(),"{output_dir}/pix2pix_G_epoch_{epoch}.pth".format(output_dir=output_dir,epoch=epoch))
+        torch.save(self.netD.state_dict(),"{output_dir}/pix2pix_D_epoch_{epoch}.pth".format(output_dir=output_dir,epoch=epoch))
 
     def save_image(self,epoch):
         #条件画像、生成画像、正解画像を並べて画像を保存
@@ -200,3 +200,19 @@ if __name__ == "__main__":
                 model.save_image(epoch)
 
         model.update_learning_rate()
+    
+    """
+    ここからテスト
+    """
+    import test
+    import torchvision
+    for path in list(pathlib.Path("/dataset/test").iterdir()):
+        dataset = test.TestDataset(str(path))
+        dataloader = torch.utils.data.DataLoader(dataset,batch_size=1)
+        cnt = 0
+        for batch_num, data in enumerate(dataloader):
+            data = data.to(torch.device("cuda"))
+            out_img = model.netG(data)
+            torchvision.utils.save_image(out_img,pathlib.Path(__file__).parent.parent.joinpath("data_resource","test_result",path.name+str(cnt).zfill(3)+".tiff"),normalize=True)
+            #origin_img.save(str(pathlib.Path(__file__).parent.parent.joinpath("data_resource","test_result","origin_"+image_name.name)))
+            cnt += 1
