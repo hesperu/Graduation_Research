@@ -6,10 +6,8 @@ from unittest import result
 import gdal
 import subprocess
 
-from keras.preprocessing import image
 from PIL import Image
 import numpy as np
-import tensorflow as tf
 Image.MAX_IMAGE_PIXELS = 1000000000
 
 class DatasetProcess:
@@ -102,7 +100,7 @@ class DatasetProcess:
 
         x_resolution,y_resolution = (0,0)
         if self.sldem_type=="sldem2013":
-            x_resolution,y_resolution = (7.40,7.40)
+            x_resolution,y_resolution = (7.403161724669900,-7.403161724669900)
         elif self.sldem_type=="sldem2015":
             x_resolution,y_resolution = (59.22529380000000,-59.22529380000000) #(118.45,118.45)
         else:
@@ -259,7 +257,7 @@ class DatasetProcess:
 
         else:
             for nac_dir in list(self.result_lro_nac_path.glob("**/*")):
-                for nac in list(nac_dir.glob("**/*.TIF")):
+                for nac in list(nac_dir.glob("**/*.tiff")):
                     origin_data = gdal.Open(str(nac))
                     width = origin_data.RasterXSize # 画像の横
                     height = origin_data.RasterYSize# 画像の縦
@@ -388,7 +386,28 @@ class DatasetProcess:
                         sldem_crop.save(self.result_cut_sldem_tiff_path.joinpath(sldem.stem+str(cnt).zfill(3)+sldem.suffix))
                         nac_crop.save(self.result_cut_lro_nac_tiff_path.joinpath(sldem.stem+str(cnt).zfill(3)+sldem.suffix))
                         cnt += 1
-    
+        
+        else:
+            dir_list = list(self.result_lro_nac_path.glob("**/*"))
+            for nac_dir in dir_list:
+                for nac in list(nac_dir.glob("**/*.tiff")):
+                    nac_img = Image.open(nac)
+                    sldem_img = Image.open(self.result_sldem_path.joinpath(nac.name))
+                    cut_width = 320
+                    cut_height = 320
+                    #切り出しスタート位置の係数。例えばper=0.1だと画像の10%のところからスタート
+                    height_per = 0.0
+                    width_per = 0.0
+                    cnt = 0
+
+                    for i in range(int(nac_img.height*height_per),nac_img.height,cut_height):
+                        for j in range(int(nac_img.width*width_per),nac_img.width,cut_width):
+                            sldem_crop = sldem_img.crop((j,i,j+cut_width,i+cut_height))
+                            nac_crop = nac_img.crop((j,i,j+cut_width,i+cut_height))
+                            sldem_crop.save(self.result_cut_sldem_tiff_path.joinpath(nac.stem+str(cnt).zfill(3)+nac.suffix))
+                            nac_crop.save(self.result_cut_lro_nac_tiff_path.joinpath(nac.stem+str(cnt).zfill(3)+nac.suffix))
+                            cnt += 1
+
     def find_sldem(self,nac_start_x,nac_start_y,nac_end_x,nac_end_y):
         """
         NACのgeotiffの位置情報を元にして、それを内包しているsldemを探してくる
@@ -497,16 +516,39 @@ class DatasetProcess:
         lro_nacの方でそれを目視で削除する。
         lro_nacの方にsldemと同じ位置の画像がないなら削除をする。
         """
-
-        for sldem_path in list(self.result_cut_sldem_tiff_path.glob("*.tiff")):
-            file_name = sldem_path.name
+        if self.nac_type == "nac_mosaic":
+            for sldem_path in list(self.result_cut_sldem_tiff_path.glob("*.tiff")):
+                file_name = sldem_path.name
             
-            if self.result_cut_lro_nac_tiff_path.joinpath(file_name).exists():
-                pass
-            else:
-                print(file_name)
-                sldem_path.unlink(missing_ok=False)
+                if self.result_cut_lro_nac_tiff_path.joinpath(file_name).exists():
+                    pass
+                else:
+                    print(file_name)
+                    sldem_path.unlink(missing_ok=False)
+        else:
+            for sldem_path in list(self.result_cut_sldem_tiff_path.glob("*.tiff")):
+                dir_list = list(self.result_lro_nac_path.glob("**/*"))
+                flag = False
+                for nac_dir in dir_list:
+                    for nac in list(nac_dir.glob("**/*.tiff")):
+                        if nac.name == sldem_path.name:
+                            flag = True
+                
+                if not flag:
+                    print(sldem_path)
+                    sldem_path.unlink(missing_ok=False)
 
+    def to8bit(self):
+        """
+        sldem2013を16bitから8bitに変換する
+        """
+        if self.sldem_type == "sldem2013":
+            for sldem in list(self.result_cut_sldem_tiff_path.glob("*.tiff")):
+                src= Image.open(sldem)
+                src= np.add(src,-np.amin(src))
+                src= src*(255/(np.amax(src)-(np.amin(src))))
+                dst = src.astype(np.uint8)
+                Image.fromarray(dst).save(sldem)
     
 if __name__ == "__main__":
     #元データのパスをプログラム実行時に指定する
@@ -519,6 +561,7 @@ if __name__ == "__main__":
     # dataset_process.sldem2geotiff()
     # dataset_process.downsampling_nac()
     # dataset_process.cut_geotiff()
-    # dataset_process.remove_disused()
+    dataset_process.remove_disused()
+    # dataset_process.to8bit()
     # dataset_process.geotiff2png()
     # dataset_process.data_augmentation()
