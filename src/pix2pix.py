@@ -157,17 +157,17 @@ class Pix2Pix():
 
         self.save_loss(train_info,batches_done)
     
-    def save_model(self,epoch):
+    def save_model(self,epoch,high_or_low):
         #モデルの保存をしておく
         output_dir = self.config.output_dir
-        torch.save(self.netG.state_dict(),"{output_dir}/pix2pix_G_epoch_{epoch}.pth".format(output_dir=output_dir,epoch=epoch))
-        torch.save(self.netD.state_dict(),"{output_dir}/pix2pix_D_epoch_{epoch}.pth".format(output_dir=output_dir,epoch=epoch))
+        torch.save(self.netG.state_dict(),"{output_dir}/pix2pix_G_{high_or_low}_epoch_{epoch}.pth".format(output_dir=output_dir,high_or_low=high_or_low,epoch=epoch))
+        torch.save(self.netD.state_dict(),"{output_dir}/pix2pix_D_{high_or_low}_epoch_{epoch}.pth".format(output_dir=output_dir,high_or_low=high_or_low,epoch=epoch))
 
-    def save_image(self,epoch):
+    def save_image(self,epoch,high_or_low):
         #条件画像、生成画像、正解画像を並べて画像を保存
         output_image = torch.cat([self.realA, self.fakeB, self.realB],dim=3)
-        torchvision.utils.save_image(output_image,"{output_dir}/pix2pix_epoch_{epoch}.tiff".format(output_dir=self.config.output_dir,epoch=epoch),normalize=True)
-        self.writer.add_image("image_epoch{epoch}".format(epoch=epoch),self.fakeB[0],epoch)
+        torchvision.utils.save_image(output_image,"{output_dir}/pix2pix_epoch_{high_or_low}_{epoch}.tiff".format(output_dir=self.config.output_dir,high_or_low=high_or_low,epoch=epoch),normalize=True)
+        self.writer.add_image("{high_or_low}_image_epoch{epoch}".format(high_or_low=high_or_low,epoch=epoch),self.fakeB[0],epoch)
     
     def save_loss(self, train_info, batches_done):
         for k, v in train_info.items():
@@ -178,10 +178,12 @@ if __name__ == "__main__":
     opt = parameter.Opts()
     param_save_path = pathlib.Path(__file__).parent.joinpath("output","parameter.json")
     opt.save_json(str(param_save_path))
-
+    """
+    最初の訓練: 低分解能から始める
+    """
     model = Pix2Pix(opt)
-    dataset = dataset.AlignedDataset(opt)
-    dataloader = torch.utils.data.DataLoader(dataset,batch_size=opt.batch_size,shuffle=True)
+    datasets = dataset.AlignedDataset(opt)
+    dataloader = torch.utils.data.DataLoader(datasets,batch_size=opt.batch_size,shuffle=True)
 
     import random
 
@@ -194,10 +196,32 @@ if __name__ == "__main__":
                 print(f'===> Epoch[{epoch}]({batch_num}/{len(dataloader)}): Loss_D: {model.lossD_real:.4f} Loss_G: {model.lossG_GAN:.4f}')
             
             if epoch % opt.save_data_interval == 0:
-                model.save_model(epoch)
+                model.save_model(epoch,"low")
 
             if epoch % opt.save_image_interval == 0:
-                model.save_image(epoch)
+                model.save_image(epoch,"low")
+
+        model.update_learning_rate()
+    
+    """
+    二回目の訓練: 高分解能のペア
+    """
+    opt.dataroot = "/dataset/pix2pix_training_high"
+    datasets = dataset.AlignedDataset(opt)
+    dataloader = torch.utils.data.DataLoader(datasets,batch_size=opt.batch_size,shuffle=True)
+    for epoch in range(1, opt.epochs + 1):
+        for batch_num, data in enumerate(dataloader):
+            batches_done = (epoch - 1) * len(dataloader) + batch_num
+            model.train(data,batches_done)
+
+            if batch_num % opt.log_interval == 0:
+                print(f'===> Epoch[{epoch}]({batch_num}/{len(dataloader)}): Loss_D: {model.lossD_real:.4f} Loss_G: {model.lossG_GAN:.4f}')
+            
+            if epoch % opt.save_data_interval == 0:
+                model.save_model(epoch,"high")
+
+            if epoch % opt.save_image_interval == 0:
+                model.save_image(epoch,"high")
 
         model.update_learning_rate()
     
