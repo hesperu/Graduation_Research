@@ -9,8 +9,9 @@ class Opts():
         self.log_interval = 20
         self.sample_interval = 10
         self.batch_size = 8
-        self.load_size = 286
+        self.load_size = 320
         self.crop_size = 256
+        self.augmentation_interval = 10
         self.cpu = True
         self.dataroot = "/dataset/pix2pix_training"
         self.output_dir = './output'
