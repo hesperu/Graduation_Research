@@ -3,7 +3,7 @@ import time
 import torch
 import torchvision
 import pathlib
-
+import argparse
 #ここから自作クラスのインポート
 import generator
 import loss
@@ -178,6 +178,10 @@ if __name__ == "__main__":
     opt = parameter.Opts()
     param_save_path = pathlib.Path(__file__).parent.joinpath("output","parameter.json")
     opt.save_json(str(param_save_path))
+    parser = argparse.ArgumentParser("pix2pix")
+    parser.add_argument("--low_epoch",required=False,default=5000,help="低分解能のエポック数")
+    parser.add_argument("--high_epoch",required=False,default=5000,help="高分解能のエポック数")
+    parse = parser.parse_args()
     """
     最初の訓練: 低分解能から始める
     """
@@ -187,7 +191,7 @@ if __name__ == "__main__":
 
     import random
 
-    for epoch in range(1, opt.epochs + 1):
+    for epoch in range(1, parse.low_epoch + 1):
         for batch_num, data in enumerate(dataloader):
             batches_done = (epoch - 1) * len(dataloader) + batch_num
             model.train(data,batches_done)
@@ -209,7 +213,7 @@ if __name__ == "__main__":
     opt.dataroot = "/dataset/pix2pix_training_high"
     datasets = dataset.AlignedDataset(opt)
     dataloader = torch.utils.data.DataLoader(datasets,batch_size=opt.batch_size,shuffle=True)
-    for epoch in range(1, opt.epochs + 1):
+    for epoch in range(1, parse.high_epoch + 1):
         for batch_num, data in enumerate(dataloader):
             batches_done = (epoch - 1) * len(dataloader) + batch_num
             model.train(data,batches_done)
