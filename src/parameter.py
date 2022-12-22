@@ -3,7 +3,8 @@ import torch
 
 class Opts():
     def __init__(self):
-        self.epochs = 10000
+        self.low_epochs = 5000
+        self.high_epochs = 5000
         self.save_data_interval = 100
         self.save_image_interval = 100
         self.log_interval = 20
@@ -26,7 +27,8 @@ class Opts():
         
     def to_dict(self):
         parameters = {
-            'epochs': self.epochs,
+            'low_epochs': self.low_epochs,
+            'high_epochs': self.high_epochs,
             'save_data_interval': self.save_data_interval,
             'save_image_interval': self.save_image_interval,
             'log_interval': self.log_interval,
