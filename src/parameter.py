@@ -5,7 +5,7 @@ class Opts():
     def __init__(self):
         self.low_epochs = 5000
         self.high_epochs = 5000
-        self.save_data_interval = 100
+        self.save_data_interval = 1000
         self.save_image_interval = 100
         self.log_interval = 20
         self.sample_interval = 10
