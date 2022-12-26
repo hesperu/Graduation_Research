@@ -72,13 +72,13 @@ def save_img(image_tensor,path):
 """
 保存したモデルを読み込むと出力される画像がおかしくなる
 なので、現状学習した後にそのままテストするようにしてる
-
+"""
 parser = argparse.ArgumentParser("pix2pix")
 parser.add_argument("--dataset",required=True,help="データセットのパス")
-parser.add_argument("--model",type=str,default="./output/pix2pix_G_epoch_10000",help="使うモデル")
+parser.add_argument("--model",required=False,type=str,default="./output/pix2pix_G_high_epoch_100.pth",help="使うモデル")
 opt = parser.parse_args()
 model = Generator().to(torch.device("cuda"))
-model.load_state_dict(torch.load(opt.model),strict=False)
+model.load_state_dict(torch.load(opt.model))
 model.eval()
 
 
@@ -93,7 +93,7 @@ for batch_num, data in enumerate(dataloader):
     #origin_img.save(str(pathlib.Path(__file__).parent.parent.joinpath("data_resource","test_result","origin_"+image_name.name)))
     cnt += 1
 
-
+"""
 image_dir = opt.dataset
 image_filenames = [x for x in list(pathlib.Path(image_dir).glob("*.tiff"))]
 transform_list = [transforms.ToTensor(),

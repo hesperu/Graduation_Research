@@ -160,8 +160,8 @@ class Pix2Pix():
     def save_model(self,epoch,high_or_low):
         #モデルの保存をしておく
         output_dir = self.config.output_dir
-        torch.save(self.netG.state_dict(),"{output_dir}/pix2pix_G_{high_or_low}_epoch_{epoch}.pth".format(output_dir=output_dir,high_or_low=high_or_low,epoch=epoch))
-        torch.save(self.netD.state_dict(),"{output_dir}/pix2pix_D_{high_or_low}_epoch_{epoch}.pth".format(output_dir=output_dir,high_or_low=high_or_low,epoch=epoch))
+        torch.save(self.netG.module.state_dict(),"{output_dir}/pix2pix_G_{high_or_low}_epoch_{epoch}.pth".format(output_dir=output_dir,high_or_low=high_or_low,epoch=epoch))
+        torch.save(self.netD.module.state_dict(),"{output_dir}/pix2pix_D_{high_or_low}_epoch_{epoch}.pth".format(output_dir=output_dir,high_or_low=high_or_low,epoch=epoch))
 
     def save_image(self,epoch,high_or_low):
         #条件画像、生成画像、正解画像を並べて画像を保存
@@ -233,7 +233,7 @@ if __name__ == "__main__":
     
     """
     ここからテスト
-    """
+    
     import test
     import torchvision
     for path in list(pathlib.Path("/dataset/test").iterdir()):
@@ -246,3 +246,4 @@ if __name__ == "__main__":
             torchvision.utils.save_image(out_img,pathlib.Path(__file__).parent.parent.joinpath("data_resource","test_result",path.name+str(cnt).zfill(3)+".tiff"),normalize=True)
             #origin_img.save(str(pathlib.Path(__file__).parent.parent.joinpath("data_resource","test_result","origin_"+image_name.name)))
             cnt += 1
+    """
