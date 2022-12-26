@@ -21,6 +21,19 @@ def calc_rmse(img1:Image,img2:Image):
 
     return rmse
 
+def calc_mae(img1:Image,img2:Image):
+    if img1.size != img2.size:
+        print("二つの画像のピクセル数が違うよ!")
+    height = img1.height
+    width = img2.width
+    img1 = np.asarray(img1)
+    img2 = np.asarray(img2)
+
+    pixel_count = height * width
+    mae = sum([abs(int(pix1) - int(pix2)) for pix1,pix2 in zip(img1.flatten(),img2.flatten())]) / pixel_count
+
+    return mae
+
 def lineprofile(img:Image):
     x0,y0 = 12, 12.5
     x1,y1 = 60,255
@@ -89,4 +102,5 @@ if __name__ == "__main__":
     img2 = Image.open(sys.argv[2])
 
     print(calc_rmse(img1,img2))
+    print(calc_mae(img1,img2))
     lineprofile(img2)
