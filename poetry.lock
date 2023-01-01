@@ -66,6 +66,14 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "matlabengine"
+version = "9.13.5"
+description = "A module to call MATLAB from Python"
+category = "main"
+optional = false
+python-versions = ">=3.8, <3.11"
+
+[[package]]
 name = "matplotlib"
 version = "3.6.1"
 description = "Python plotting package"
@@ -211,8 +219,8 @@ python-versions = ">=3.7"
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.9"
-content-hash = "b2cfe5d757b2fcbd3e683436f0cb67cb7c33882fa446624aabe457f942477676"
+python-versions = ">=3.10.0, <3.11"
+content-hash = "c36ad7d15bcaefe4751707c30612477b99d757f6921f96e322ee99553b82d6c5"
 
 [metadata.files]
 contourpy = []
@@ -223,6 +231,7 @@ cycler = [
 fonttools = []
 gdal = []
 kiwisolver = []
+matlabengine = []
 matplotlib = []
 numpy = []
 packaging = [

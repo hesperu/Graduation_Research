@@ -368,10 +368,10 @@ class DatasetProcess:
             self.result_cut_sldem_tiff_path.mkdir()
 
         if self.nac_type == "nac_mosaic":
-            for sldem in list(self.result_sldem_path.glob("**/*.tiff")):
+            for sldem in list(self.result_sldem_path.glob("*.tiff")):
                 sldem_img = Image.open(sldem)
                 print(sldem)
-                nac_img = Image.open(self.result_lro_nac_path.joinpath(sldem.name))
+                nac_img = Image.open(self.result_lro_nac_path.joinpath("aligned",sldem.name))
                 cut_width = 320
                 cut_height = 320
                 #切り出しスタート位置の係数。例えばper=0.1だと画像の10%のところからスタート
@@ -543,13 +543,24 @@ class DatasetProcess:
         sldem2013を16bitから8bitに変換する
         """
         if self.sldem_type == "sldem2013":
-            for sldem in list(self.result_cut_sldem_tiff_path.glob("*.tiff")):
-                src= Image.open(sldem)
-                src= np.add(src,-np.amin(src))
-                src= src*(255/(np.amax(src)-(np.amin(src))))
+            for sldem in list(self.result_sldem_path.glob("*.tiff")):
+                print(sldem)
+                src = Image.open(sldem)
+                src = np.add(src,-np.amin(src))
+                src = src*(255/(np.amax(src)-(np.amin(src))))
                 dst = src.astype(np.uint8)
                 Image.fromarray(dst).save(sldem)
-    
+
+        if self.sldem_type == "sldem2015":
+            for sldem in list(self.result_sldem_path.glob("NAC*.tiff")):
+                print(sldem)
+                src = Image.open(sldem)
+                src = np.add(src,-np.amin(src))
+                src = src*(255/(np.amax(src)-(np.amin(src))))
+                dst = src.astype(np.uint8)
+                Image.fromarray(dst).save(sldem)
+                
+
 if __name__ == "__main__":
     #元データのパスをプログラム実行時に指定する
     if len(sys.argv) > 1:
