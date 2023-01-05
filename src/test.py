@@ -7,11 +7,12 @@ import numpy as np
 from generator import Generator
 from PIL import Image
 from torch.autograd import Variable
+import validate
 
 class TestDataset(torch.utils.data.Dataset):
     def __init__(self,path):
         self.data_path = path
-        self.data_list = list(pathlib.Path(path).glob("*.tiff"))
+        self.data_list = self._paths_sorted(list(pathlib.Path(path).glob("*.tiff")))
 
     def __len__(self):
         return len(self.data_list)
@@ -30,6 +31,14 @@ class TestDataset(torch.utils.data.Dataset):
         img = transform(img)
 
         return img
+    
+    def _paths_sorted(self,paths):
+        """
+        nacとsldemの画像をソートする
+        わざわざ関数にしたのはpathlibでnatural sortが使えないから
+        """
+        return sorted(paths,key=lambda x:x.name)
+
 
 def tensor2im(input_image, imtype=np.uint8):
     """"Converts a Tensor array into a numpy image array.
@@ -74,24 +83,45 @@ def save_img(image_tensor,path):
 なので、現状学習した後にそのままテストするようにしてる
 """
 parser = argparse.ArgumentParser("pix2pix")
-parser.add_argument("--dataset",required=True,help="データセットのパス")
-parser.add_argument("--model",required=False,type=str,default="./output/pix2pix_G_high_epoch_100.pth",help="使うモデル")
+parser.add_argument("--dataset",required=False,help="データセットのパス",default="../test/")
+parser.add_argument("--model",required=False,type=str,default="./output/pix2pix_G_high_epoch_3000.pth",help="使うモデル")
 opt = parser.parse_args()
 model = Generator().to(torch.device("cuda"))
 model.load_state_dict(torch.load(opt.model))
 model.eval()
 
+path_list = ["HPONDS","LICHTENBERG","APOLLO11","IMBRIUM"]
 
-dataset = TestDataset(opt.dataset)
-dataloader = torch.utils.data.DataLoader(dataset,batch_size=1,shuffle=True)
-cnt = 0
+for dir_path in path_list:
+    dir_path = pathlib.Path(__file__).parent.parent.joinpath("test",dir_path)
+    dataset = TestDataset(dir_path)
+    dataloader = torch.utils.data.DataLoader(dataset,batch_size=1,shuffle=True)
+    
+    cnt = 0
+    for batch_num, data in enumerate(dataloader):
+        data = data.to(torch.device("cuda"))
+        out_img = model(data)
+        utils.save_image(out_img,pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,str(cnt).zfill(4)+".tiff"),normalize=True)
+        #origin_img.save(str(pathlib.Path(__file__).parent.parent.joinpath("data_resource","test_result","origin_"+image_name.name)))
+        cnt += 1
 
-for batch_num, data in enumerate(dataloader):
-    data = data.to(torch.device("cuda"))
-    out_img = model(data)
-    utils.save_image(out_img,pathlib.Path(__file__).parent.parent.joinpath("data_resource","test_result",str(cnt)+".tiff"),normalize=True)
-    #origin_img.save(str(pathlib.Path(__file__).parent.parent.joinpath("data_resource","test_result","origin_"+image_name.name)))
-    cnt += 1
+    rmse_res = 0.0
+    mae_res = 0.0
+    print(dir_path)
+
+    for img_path in (list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))):
+        generated = Image.open(img_path)
+        real_ = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test","evalution_dem",dir_path.name,"nac_dtm",img_path.name))
+        rmse_res += validate.calc_rmse(generated,real_)
+
+    for img_path in (list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))):
+        generated = Image.open(img_path)
+        real_ = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test","evalution_dem",dir_path.name,"nac_dtm",img_path.name))
+        mae_res += validate.calc_mae(generated,real_)
+
+    rmse_res /= len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff")))
+    mae_res /= len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff")))
+    print("rmseの結果が{rmse}で、maeの結果が{mae}".format(rmse=rmse_res,mae=mae_res))
 
 """
 image_dir = opt.dataset

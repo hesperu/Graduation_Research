@@ -5,6 +5,7 @@
 *.LBL
 *.xml
 *.pyc
+*.DS_Store
 src/output/
 src/logs/
 data_resource/

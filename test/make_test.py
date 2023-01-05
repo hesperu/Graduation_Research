@@ -110,7 +110,30 @@ def paths_sorted(paths):
     return sorted(paths,key=lambda x:x.name)
 
 
+"""生成画像と本物を比較するときのために"""
+def rename():
+    current_dir = pathlib.Path(__file__).parent
+    dem_dir_path = current_dir.joinpath("evalution_dem")
+
+    for tiff_path in paths_sorted(list(current_dir.glob("*.tiff"))):
+        dir_path = dem_dir_path.joinpath(tiff_path.stem)
+        nac_dtm_dir_path = dir_path.joinpath("nac_dtm")
+        cnt = 0
+        for dtm_img_path in paths_sorted(list(nac_dtm_dir_path.glob("*.tiff"))):
+            #img = Image.open(str(dtm_img_path))
+            #img.save(str(dtm_img_path.parent.joinpath(str(cnt).zfill(4)+".tiff")))
+            print(str(dtm_img_path.parent.joinpath(str(cnt).zfill(4)+".tiff")))
+            dtm_img_path.rename(str(dtm_img_path.parent.joinpath(str(cnt).zfill(4)+".tiff")))
+            cnt += 1
+
+def paths_sorted(paths):
+    """
+    nacとsldemの画像をソートする
+    わざわざ関数にしたのはpathlibでnatural sortが使えないから
+    """
+    return sorted(paths,key=lambda x:x.name)
+
+
 if __name__ == "__main__":
     cut()
     # remove_disused()
-    # rename()
