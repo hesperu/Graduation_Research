@@ -15,7 +15,6 @@ def calc_rmse(img1:Image,img2:Image):
     img2 = np.asarray(img2)
 
     pixel_count = height*width
-    print(img1.shape)
     mse = sum([(int(pix1)-int(pix2))*(int(pix1)-int(pix2)) for pix1,pix2 in zip(img1.flatten(),img2.flatten())]) / pixel_count
     rmse =  math.sqrt(mse)
 
