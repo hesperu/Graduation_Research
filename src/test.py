@@ -91,21 +91,43 @@ model.load_state_dict(torch.load(opt.model))
 model.eval()
 
 path_list = ["HPONDS","LICHTENBERG","APOLLO11","IMBRIUM"]
-
+HPONDS_STATUS = {
+    "min":109.3834,
+    "max":4735.2578,
+}
 for dir_path in path_list:
     dir_path = pathlib.Path(__file__).parent.parent.joinpath("test",dir_path)
     dataset = TestDataset(dir_path)
     dataloader = torch.utils.data.DataLoader(dataset,batch_size=1,shuffle=True)
     
     cnt = 0
+    rmse_res = 0.0
+    mae_res = 0.0
+    rmse_arr = np.zeros(len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))))
+    mae_arr = np.zeros(len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))))
+    print(dir_path)
+
     for batch_num, data in enumerate(dataloader):
+        print(batch_num)
         data = data.to(torch.device("cuda"))
         out_img = model(data)
         utils.save_image(out_img,pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,str(cnt).zfill(4)+".tiff"),normalize=True,range=(0.0,10000))
-        tmp = out_img[0,:,:,:]
-        tmp = tmp.permute(1,2,0)
-        tmp = tmp.to('cpu').detach().numpy().copy()
-        # img_pil = Image.fromarray((tmp*255).astype(np.uint8))
+        out_img = (out_img*HPONDS_STATUS["max"] - out_img*HPONDS_STATUS["min"] + HPONDS_STATUS["max"]+HPONDS_STATUS["min"])/2
+        generated = out_img[0,:,:,:]
+        generated = generated.permute(1,2,0)
+        generated = generated.to('cpu').detach().numpy().copy()
+        real_ = np.array(Image.open(pathlib.Path(__file__).parent.parent.joinpath("test",dir_path.name,str(cnt).zfill(4)+".tiff")))
+        cur_rmse = validate.calc_rmse(generated,real_)
+        rmse_arr[i] = cur_rmse
+        #rmse_res += cur_rmse
+        cur_mae = validate.calc_mae(generated,real_)
+        #mae_arr[i] = cur_mae
+        mae_res += cur_mae
+
+        cnt += 1
+
+    """
+        #img_pil = Image.fromarray((tmp*255).astype(np.uint8))
         #print(tmp*255)
         #img = out_img.to('cpu').detach().numpy().copy()[0]
         #print(img.shape)
@@ -115,13 +137,7 @@ for dir_path in path_list:
         #img.save(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,str(cnt).zfill(4)+".tiff"))
         #origin_img.save(str(pathlib.Path(__file__).parent.parent.joinpath("data_resource","test_result","origin_"+image_name.name)))
         #img_pil.save(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,str(cnt).zfill(4)+".tiff"))
-        cnt += 1
-
-    rmse_res = 0.0
-    mae_res = 0.0
-    rmse_arr = np.zeros(len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))))
-    mae_arr = np.zeros(len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))))
-    print(dir_path)
+        
 
     for i,img_path in enumerate(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))):
         generated = Image.open(img_path).convert("L")
@@ -137,6 +153,7 @@ for dir_path in path_list:
         cur_mae = validate.calc_mae(generated,real_)
         mae_arr[i] = cur_mae
         mae_res += cur_mae
+    """
 
     rmse_res /= len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff")))
     mae_res /= len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff")))
