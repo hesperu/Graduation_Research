@@ -1,3 +1,14 @@
+<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+<script type="text/x-mathjax-config">
+ MathJax.Hub.Config({
+ tex2jax: {
+ inlineMath: [['$', '$'] ],
+ displayMath: [ ['$$','$$'], ["\\[","\\]"] ]
+ }
+ });
+</script>
+
 # データ関連
 
 ## 使うデータ
@@ -54,6 +65,22 @@ matlatb.pyplot のimsaveだとこれを引数で指定できる
     5. 元データのメタデータにincident angleが記載されている。
 
 - LRO NACのデータに記載されているか？
+
+### 標高値の復元について
+- DEMはピクセル値=標高値と出村先生が言う
+    - これはちょっと違う。geotiffの中にoffsetが定義されていて、実際の標高地の求め方はoffset+ピクセル値で復元している
+- ネットワークから出てきた画像は正規化済み
+    - 正規化からの復元に関しては
+    $$ x = \frac{x_{norm}x_{max} - x_{norm}x_{min}+x_{max}+x_{min}}{2}
+    $$
+    x_normは正規化された値
+    - 過去研究だと統計的な値を使っている
+        $$  復元したDEMの標高値 = mean_{lowDEM} + SD_{lowDEM}DEM_{pred}
+
+- ネットワークから生成されたDEMの復元をするには、正規化の手順を変えてみるとか
+    - ある範囲のオフセットをsldemから求めておいて、x_norm+offsetにするとか
+        - でもそれだとx_normが[-1,1]の値にあるからもとの復元はできないんじゃあ...(元のDEMはオフセットに加算する値の範囲が[-7,9]とかある)
+
 
 ## 参考文献
 [1] Onodera+(2020) “Resolution enhancement of DEM of the lunar surface using machine learning”.
