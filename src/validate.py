@@ -3,6 +3,7 @@ import numpy as np
 import math
 import scipy.ndimage
 import matplotlib.pyplot as plt
+import pathlib
 
 def calc_rmse(img1:Image,img2:Image):
     """
@@ -32,6 +33,32 @@ def calc_mae(img1:Image,img2:Image):
     mae = sum([abs(int(pix1) - int(pix2)) for pix1,pix2 in zip(img1.flatten(),img2.flatten())]) / pixel_count
 
     return mae
+
+def plot_hist(arr:np.array,arr_type:str,save_path:pathlib.Path):
+    """
+    arr:RMSE,MAEの値を入れた配列
+    arr_type: RMSEかMAEか
+    戻り値はなし
+    """
+    print(save_path)
+    fig,ax = plt.subplots()
+    #n:階級の度数、bins,階級のリスト,階級幅はスタージェスの公式を使用する
+    n,bins,patches = ax.hist(arr,bins=int(math.log2(len(arr))+1),range=(arr.min()-5,arr.max()+5))
+
+    ax.set_title("{name} histogram".format(name=arr_type))
+    ax.set_xlabel("Value (m)")
+    ax.set_ylabel("Number")
+
+    diff = arr.max()+5 - (arr.min()-5)
+    labels = [str(x) for x in range(int(arr.min()-5),int(arr.max()+5),int(diff/int(math.log2(len(arr))+1)))]
+     
+    ax.set_xticks([int(x) for x in range(int(arr.min()-5),int(arr.max()+5),int(diff/int(math.log2(len(arr))+1)))])
+    # ax.set_xticks([(x) for x in range(arr.min()-5,arr.max()+5)])
+    # X軸にラベルをセット、90度回転させる
+    ax.set_xticklabels(labels, rotation = 90)
+
+    plt.savefig(str(save_path))
+
 
 def lineprofile(img:Image):
     x0,y0 = 12, 12.5
