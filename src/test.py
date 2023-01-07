@@ -108,20 +108,20 @@ for dir_path in path_list:
     print(dir_path)
 
     for batch_num, data in enumerate(dataloader):
-        print(batch_num)
         data = data.to(torch.device("cuda"))
         out_img = model(data)
-        utils.save_image(out_img,pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,str(cnt).zfill(4)+".tiff"),normalize=True,range=(0.0,10000))
+        utils.save_image(out_img,pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,str(cnt).zfill(4)+".tiff"),normalize=True)
+        
         out_img = (out_img*HPONDS_STATUS["max"] - out_img*HPONDS_STATUS["min"] + HPONDS_STATUS["max"]+HPONDS_STATUS["min"])/2
-        generated = out_img[0,:,:,:]
-        generated = generated.permute(1,2,0)
+        generated = out_img[0,0,:,:]
+        generated = generated.permute(1,0)
         generated = generated.to('cpu').detach().numpy().copy()
-        real_ = np.array(Image.open(pathlib.Path(__file__).parent.parent.joinpath("test",dir_path.name,str(cnt).zfill(4)+".tiff")))
+        real_ = np.array(Image.open(pathlib.Path(__file__).parent.parent.joinpath("test","evalution_dem",dir_path.name,"nac_dtm",str(cnt).zfill(4)+".tiff")))
         cur_rmse = validate.calc_rmse(generated,real_)
-        rmse_arr[i] = cur_rmse
-        #rmse_res += cur_rmse
+        rmse_arr[batch_num] = cur_rmse
+        rmse_res += cur_rmse
         cur_mae = validate.calc_mae(generated,real_)
-        #mae_arr[i] = cur_mae
+        mae_arr[batch_num] = cur_mae
         mae_res += cur_mae
 
         cnt += 1

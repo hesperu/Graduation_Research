@@ -5,15 +5,13 @@ import scipy.ndimage
 import matplotlib.pyplot as plt
 import pathlib
 
-def calc_rmse(img1:Image,img2:Image):
+def calc_rmse(img1:np.ndarray, img2:np.ndarray):
     """
     """
-    if img1.size != img2.size:
+    if img1.shape != img2.shape:
         print("二つの画像のピクセル数が違うよ!")
-    height = img1.height
-    width = img1.width
-    img1 = np.asarray(img1)
-    img2 = np.asarray(img2)
+    height = img1.shape[0]
+    width = img1.shape[1]
 
     pixel_count = height*width
     mse = sum([(int(pix1)-int(pix2))*(int(pix1)-int(pix2)) for pix1,pix2 in zip(img1.flatten(),img2.flatten())]) / pixel_count
@@ -21,13 +19,11 @@ def calc_rmse(img1:Image,img2:Image):
 
     return rmse
 
-def calc_mae(img1:Image,img2:Image):
+def calc_mae(img1:np.ndarray, img2:np.ndarray):
     if img1.size != img2.size:
         print("二つの画像のピクセル数が違うよ!")
-    height = img1.height
-    width = img2.width
-    img1 = np.asarray(img1)
-    img2 = np.asarray(img2)
+    height = img1.shape[0]
+    width = img1.shape[1]
 
     pixel_count = height * width
     mae = sum([abs(int(pix1) - int(pix2)) for pix1,pix2 in zip(img1.flatten(),img2.flatten())]) / pixel_count
