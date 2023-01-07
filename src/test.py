@@ -101,26 +101,48 @@ for dir_path in path_list:
     for batch_num, data in enumerate(dataloader):
         data = data.to(torch.device("cuda"))
         out_img = model(data)
-        utils.save_image(out_img,pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,str(cnt).zfill(4)+".tiff"),normalize=True)
+        utils.save_image(out_img,pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,str(cnt).zfill(4)+".tiff"),normalize=True,range=(0.0,10000))
+        tmp = out_img[0,:,:,:]
+        tmp = tmp.permute(1,2,0)
+        tmp = tmp.to('cpu').detach().numpy().copy()
+        # img_pil = Image.fromarray((tmp*255).astype(np.uint8))
+        #print(tmp*255)
+        #img = out_img.to('cpu').detach().numpy().copy()[0]
+        #print(img.shape)
+        #img = Image.fromarray(img)
+        #print(img)
+        # img = transforms.functional.to_pil_image(img)
+        #img.save(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,str(cnt).zfill(4)+".tiff"))
         #origin_img.save(str(pathlib.Path(__file__).parent.parent.joinpath("data_resource","test_result","origin_"+image_name.name)))
+        #img_pil.save(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,str(cnt).zfill(4)+".tiff"))
         cnt += 1
 
     rmse_res = 0.0
     mae_res = 0.0
+    rmse_arr = np.zeros(len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))))
+    mae_arr = np.zeros(len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))))
     print(dir_path)
 
-    for img_path in (list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))):
-        generated = Image.open(img_path)
+    for i,img_path in enumerate(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))):
+        generated = Image.open(img_path).convert("L")
+        #print(np.asarray(generated).shape)
         real_ = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test","evalution_dem",dir_path.name,"nac_dtm",img_path.name))
-        rmse_res += validate.calc_rmse(generated,real_)
+        cur_rmse = validate.calc_rmse(generated,real_)
+        rmse_arr[i] = cur_rmse
+        rmse_res += cur_rmse
 
-    for img_path in (list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))):
+    for i,img_path in enumerate(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))):
         generated = Image.open(img_path)
         real_ = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test","evalution_dem",dir_path.name,"nac_dtm",img_path.name))
-        mae_res += validate.calc_mae(generated,real_)
+        cur_mae = validate.calc_mae(generated,real_)
+        mae_arr[i] = cur_mae
+        mae_res += cur_mae
 
     rmse_res /= len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff")))
     mae_res /= len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff")))
+    validate.plot_hist(rmse_arr,"RMSE",pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).joinpath("rmse_hist.png"))
+    validate.plot_hist(rmse_arr,"MAE",pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).joinpath("mae_hist.png"))
+
     print("rmseの結果が{rmse}で、maeの結果が{mae}".format(rmse=rmse_res,mae=mae_res))
 
 """
