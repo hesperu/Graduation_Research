@@ -1,15 +1,16 @@
 from PIL import Image
 import pathlib
+import numpy as np
 
 Image.MAX_IMAGE_PIXELS = 1000000000 #pillowで使えるピクセル数の上限を大きくしないとエラーが起きる
 
 def cut():
     current_dir = pathlib.Path(__file__).parent
-    cut_width = 256
-    cut_height = 256
+    cut_width = 320
+    cut_height = 320
     cnt = 0
     #可視画像の分割
-    """
+    
     for tiff_path in list(current_dir.glob("*.tiff")):
         dir_path = pathlib.Path(tiff_path.stem)
         if dir_path.exists():
@@ -21,9 +22,14 @@ def cut():
         for i in range(0,tiff_img.height,cut_height):
             for j in range(0,tiff_img.width,cut_width):
                 tiff_crop = tiff_img.crop((j,i,j+cut_width,i+cut_height))
-                tiff_crop.save(dir_path.joinpath(str(cnt).zfill(3)+".tiff"))
+                tiff_np = np.array(tiff_crop)
+                print(tiff_np.max())
+                if tiff_np.min() == 0:
+                    pass
+                else:
+                    tiff_crop.save(dir_path.joinpath(str(cnt).zfill(3)+".tiff"))
                 cnt += 1
-    """
+
     cnt = 0
     #sldemの分割
     dem_dir_path = current_dir.joinpath("evalution_dem")
@@ -62,7 +68,10 @@ def cut():
         for i in range(0,nac_dtm_img.height,cut_height):
             for j in range(0,nac_dtm_img.width,cut_width):
                 nac_dtm_crop = nac_dtm_img.crop((j,i,j+cut_width,i+cut_height))
-                nac_dtm_crop.save(nac_dtm_dir_path.joinpath(str(cnt).zfill(3)+".tiff"))
+                if pathlib.Path(__file__).parent.joinpath(dir_path.name,str(cnt).zfill(3)+".tiff").exists():
+                    nac_dtm_crop.save(nac_dtm_dir_path.joinpath(str(cnt).zfill(3)+".tiff"))
+                else:
+                    pass
                 cnt += 1
 
 def remove_disused():
@@ -119,21 +128,22 @@ def rename():
         dir_path = dem_dir_path.joinpath(tiff_path.stem)
         nac_dtm_dir_path = dir_path.joinpath("nac_dtm")
         cnt = 0
+        print(nac_dtm_dir_path)
         for dtm_img_path in paths_sorted(list(nac_dtm_dir_path.glob("*.tiff"))):
             #img = Image.open(str(dtm_img_path))
             #img.save(str(dtm_img_path.parent.joinpath(str(cnt).zfill(4)+".tiff")))
-            print(str(dtm_img_path.parent.joinpath(str(cnt).zfill(4)+".tiff")))
+            # print(str(dtm_img_path.parent.joinpath(str(cnt).zfill(4)+".tiff")))
             dtm_img_path.rename(str(dtm_img_path.parent.joinpath(str(cnt).zfill(4)+".tiff")))
             cnt += 1
-
-def paths_sorted(paths):
-    """
-    nacとsldemの画像をソートする
-    わざわざ関数にしたのはpathlibでnatural sortが使えないから
-    """
-    return sorted(paths,key=lambda x:x.name)
-
+            
+    for tiff_path in list(current_dir.glob("*.tiff")):
+        dir_path = current_dir.joinpath(tiff_path.stem)
+        cnt = 0
+        for vis in paths_sorted(list(dir_path.glob("*.tiff"))):
+            vis.rename(str(vis.parent.joinpath(str(cnt).zfill(4)+".tiff")))
+            cnt += 1
 
 if __name__ == "__main__":
     cut()
-    # remove_disused()
+    #remove_disused()
+    rename()

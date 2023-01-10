@@ -35,8 +35,8 @@ def calc_mae(img1:Image,img2:Image):
     return mae
 
 def lineprofile(vis:Image,generated:Image,real:Image):
-    x0,y0 = 55,0
-    x1,y1 = 160,255
+    x0,y0 = 0,215
+    x1,y1 = 255,180
     num = int(round(np.hypot(x1-x0, y1-y0))) #二点間の距離をピクセル数に変換
     x, y = np.linspace(x0, x1, num), np.linspace(y0, y1, num)
 
@@ -56,7 +56,7 @@ def lineprofile(vis:Image,generated:Image,real:Image):
     """
     線に沿ったピクセル値を補完しつつ取得
     """
-    DEM_RANGE = [1881.8425,4735.1977]
+    DEM_RANGE = [1915.1011,4493.9414]
     pixel_resolution = 55.0
 
     generated = np.array(generated)
@@ -83,15 +83,15 @@ def lineprofile(vis:Image,generated:Image,real:Image):
     """
     plt.figure(figsize=(12,9))
     plt.subplot(2,3,1)
-    plt.plot([x0, x1], [y0, y1], 'go-',linewidth = 1, label='width=1')
+    plt.plot([x0, x1], [y0, y1], 'go-',linewidth = 1)
     plt.imshow(vis,cmap="gray")
     plt.subplot(2,3,2)
     plt.imshow(generated,cmap="gray")
-    plt.plot([x0, x1], [y0, y1], 'ro-',linewidth = 1, label='width=1')
+    plt.plot([x0, x1], [y0, y1], 'ro-',linewidth = 1)
     plt.subplot(2,3,3)
     plt.imshow(real,cmap="gray")
     # plt.plot([x0, x1], [y0, y1], 'ro-',linewidth = width,label='width='+str(width))
-    plt.plot([x0, x1], [y0, y1], 'bo-',linewidth = 1, label='width=1')
+    plt.plot([x0, x1], [y0, y1], 'bo-',linewidth = 1)
     plt.legend()
     plt.subplot(2,1,2)
     plt.rcParams["font.size"] = 18
@@ -107,7 +107,7 @@ def lineprofile(vis:Image,generated:Image,real:Image):
     plt.xlabel('Distance(m)')
     plt.ylabel('Height (m)')
 
-    plt.savefig("result.tiff")
+    plt.savefig("result_2.tiff")
 
     
 
