@@ -10,3 +10,4 @@ src/output/
 src/logs/
 data_resource/
 log*
+*.json*
