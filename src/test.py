@@ -8,6 +8,9 @@ from generator import Generator
 from PIL import Image
 from torch.autograd import Variable
 import validate
+import json
+
+
 
 class TestDataset(torch.utils.data.Dataset):
     def __init__(self,path):
@@ -91,43 +94,21 @@ model.load_state_dict(torch.load(opt.model))
 model.eval()
 
 path_list = ["HPONDS","LICHTENBERG","APOLLO11","IMBRIUM"]
-HPONDS_STATUS = {
-    "min":109.3834,
-    "max":4735.2578,
-}
+
 for dir_path in path_list:
     dir_path = pathlib.Path(__file__).parent.parent.joinpath("test",dir_path)
     dataset = TestDataset(dir_path)
     dataloader = torch.utils.data.DataLoader(dataset,batch_size=1,shuffle=True)
     
     cnt = 0
-    rmse_res = 0.0
-    mae_res = 0.0
-    rmse_arr = np.zeros(len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))))
-    mae_arr = np.zeros(len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))))
-    print(dir_path)
-
     for batch_num, data in enumerate(dataloader):
         data = data.to(torch.device("cuda"))
         out_img = model(data)
-        utils.save_image(out_img,pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,str(cnt).zfill(4)+".tiff"),normalize=True)
-        
-        out_img = (out_img*HPONDS_STATUS["max"] - out_img*HPONDS_STATUS["min"] + HPONDS_STATUS["max"]+HPONDS_STATUS["min"])/2
-        generated = out_img[0,0,:,:]
-        generated = generated.permute(1,0)
-        generated = generated.to('cpu').detach().numpy().copy()
-        real_ = np.array(Image.open(pathlib.Path(__file__).parent.parent.joinpath("test","evalution_dem",dir_path.name,"nac_dtm",str(cnt).zfill(4)+".tiff")))
-        cur_rmse = validate.calc_rmse(generated,real_)
-        rmse_arr[batch_num] = cur_rmse
-        rmse_res += cur_rmse
-        cur_mae = validate.calc_mae(generated,real_)
-        mae_arr[batch_num] = cur_mae
-        mae_res += cur_mae
-
-        cnt += 1
-
-    """
-        #img_pil = Image.fromarray((tmp*255).astype(np.uint8))
+        utils.save_image(out_img,pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,str(cnt).zfill(4)+".tiff"),normalize=True,range=(0.0,10000))
+        tmp = out_img[0,:,:,:]
+        tmp = tmp.permute(1,2,0)
+        tmp = tmp.to('cpu').detach().numpy().copy()
+        # img_pil = Image.fromarray((tmp*255).astype(np.uint8))
         #print(tmp*255)
         #img = out_img.to('cpu').detach().numpy().copy()[0]
         #print(img.shape)
@@ -137,8 +118,17 @@ for dir_path in path_list:
         #img.save(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,str(cnt).zfill(4)+".tiff"))
         #origin_img.save(str(pathlib.Path(__file__).parent.parent.joinpath("data_resource","test_result","origin_"+image_name.name)))
         #img_pil.save(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,str(cnt).zfill(4)+".tiff"))
-        
+        cnt += 1
 
+    rmse_res = 0.0
+    mae_res = 0.0
+    rmse_arr = np.zeros(len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))))
+    mae_arr = np.zeros(len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))))
+    print(dir_path)
+
+    #パス、RMSE,MAE,を持つ
+    generated_list = []
+    
     for i,img_path in enumerate(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))):
         generated = Image.open(img_path).convert("L")
         #print(np.asarray(generated).shape)
@@ -146,6 +136,7 @@ for dir_path in path_list:
         cur_rmse = validate.calc_rmse(generated,real_)
         rmse_arr[i] = cur_rmse
         rmse_res += cur_rmse
+        generated_list.append({"name":img_path.name,"rmse":cur_rmse,"mae":0})
 
     for i,img_path in enumerate(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff"))):
         generated = Image.open(img_path)
@@ -153,7 +144,7 @@ for dir_path in path_list:
         cur_mae = validate.calc_mae(generated,real_)
         mae_arr[i] = cur_mae
         mae_res += cur_mae
-    """
+        generated_list[i]["mae"] = cur_mae
 
     rmse_res /= len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff")))
     mae_res /= len(list(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).glob("*.tiff")))
@@ -161,6 +152,98 @@ for dir_path in path_list:
     validate.plot_hist(rmse_arr,"MAE",pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name).joinpath("mae_hist.png"))
 
     print("rmseの結果が{rmse}で、maeの結果が{mae}".format(rmse=rmse_res,mae=mae_res))
+
+    rmse_top100 = pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,"rmse_top100")
+    rmse_worst100 = pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,"rmse_worst100")
+    mae_top100 = pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,"mae_top100")
+    mae_worst100 = pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,"mae_worst100")
+    if rmse_top100.exists():
+        pass
+    else:
+        rmse_top100.mkdir()
+    if rmse_worst100.exists():
+        pass
+    else:
+        rmse_worst100.mkdir()
+    if mae_top100.exists():
+        pass
+    else:
+        mae_top100.mkdir()
+    if mae_worst100.exists():
+        pass
+    else:
+        mae_worst100.mkdir()
+    
+    #RMSEでソート
+    generated_list = sorted(generated_list,key=lambda value:value["rmse"])
+    for i,generated in enumerate(generated_list):
+        if i > 100:
+            break
+        img = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,generated["name"]))
+        real_ = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test","evalution_dem",dir_path.name,"nac_dtm",generated["name"]))
+        vis = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test",dir_path,generated["name"]))
+        aligned = Image.new("L",(vis.width + img.width + real_.width, img.height))
+        aligned.paste(vis,(0,0))
+        aligned.paste(img,(img.width,0))
+        aligned.paste(real_,(vis.width+img.width,0))
+        aligned.save(rmse_top100.joinpath(str(i+1).zfill(3)+".tiff"))
+        json_path = rmse_top100.joinpath(str(i+1).zfill(3)+".json")
+        json_file = open(str(json_path),mode="w")
+        json.dump(generated,json_file)
+        json_file.close()
+    
+    generated_list = sorted(generated_list,key=lambda value:value["rmse"],reverse=True)
+    for i,generated in enumerate(generated_list):
+        if i > 100:
+            break
+        img = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,generated["name"]))
+        real_ = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test","evalution_dem",dir_path.name,"nac_dtm",generated["name"]))
+        vis = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test",dir_path,generated["name"]))
+        aligned = Image.new("L",(vis.width + img.width + real_.width, img.height))
+        aligned.paste(vis,(0,0))
+        aligned.paste(img,(img.width,0))
+        aligned.paste(real_,(vis.width+img.width,0))
+        aligned.save(rmse_worst100.joinpath(str(i+1).zfill(3)+".tiff"))
+        json_path = rmse_worst100.joinpath(str(i+1).zfill(3)+".json")
+        json_file = open(str(json_path),mode="w")
+        json.dump(generated,json_file)
+        json_file.close()
+
+    generated_list = sorted(generated_list,key=lambda value:value["mae"])
+    for i,generated in enumerate(generated_list):
+        if i > 100:
+            break
+        img = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,generated["name"]))
+        real_ = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test","evalution_dem",dir_path.name,"nac_dtm",generated["name"]))
+        vis = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test",dir_path,generated["name"]))
+        aligned = Image.new("L",(vis.width + img.width + real_.width, img.height))
+        aligned.paste(vis,(0,0))
+        aligned.paste(img,(img.width,0))
+        aligned.paste(real_,(vis.width+img.width,0))
+        aligned.save(mae_top100.joinpath(str(i+1).zfill(3)+".tiff"))
+        json_path = mae_top100.joinpath(str(i+1).zfill(3)+".json")
+        json_file = open(str(json_path),mode="w")
+        generated
+        json.dump(generated,json_file)
+        json_file.close()
+
+    generated_list = sorted(generated_list,key=lambda value:value["mae"],reverse=True)
+    for i,generated in enumerate(generated_list):
+        if i > 100:
+            break
+        img = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test","test_result",dir_path.name,generated["name"]))
+        real_ = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test","evalution_dem",dir_path.name,"nac_dtm",generated["name"]))
+        vis = Image.open(pathlib.Path(__file__).parent.parent.joinpath("test",dir_path,generated["name"]))
+        aligned = Image.new("L",(vis.width + img.width + real_.width, img.height))
+        aligned.paste(vis,(0,0))
+        aligned.paste(img,(img.width,0))
+        aligned.paste(real_,(vis.width+img.width,0))
+        aligned.save(mae_worst100.joinpath(str(i+1).zfill(3)+".tiff"))
+        json_path = mae_worst100.joinpath(str(i+1).zfill(3)+".json")
+        json_file = open(str(json_path),mode="w")
+        json.dump(generated,json_file)
+        json_file.close()
+
 
 """
 image_dir = opt.dataset
