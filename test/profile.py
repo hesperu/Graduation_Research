@@ -38,8 +38,8 @@ def lineprofile():
     ax.set_xticks([0, 128*55, 256*55])
     ax.set_xlabel("Distance [m]")
     ax.set_ylabel("Height [m]")
-    ax.plot(dem_pixel_list,dem_value_list,color = "blue", label="LRO NAC DEM")
     ax.plot(dem_pixel_list,generated_value_list,color="red",label="Generated DEM")
+    ax.plot(dem_pixel_list,dem_value_list,color = "blue", label="LRO NAC DEM")
     ax.legend()
     plt.show()
 
